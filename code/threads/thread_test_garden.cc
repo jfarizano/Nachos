@@ -10,6 +10,10 @@
 
 #include <stdio.h>
 
+#ifdef SEMAPHORE_TEST
+#include "semaphore.hh"
+Semaphore *SEMAPHORE_TURNS = new Semaphore("Test", 3);
+#endif
 
 static const unsigned NUM_TURNSTILES = 2;
 static const unsigned ITERATIONS_PER_TURNSTILE = 50;
