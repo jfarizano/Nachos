@@ -45,7 +45,9 @@ sys_info.o: ../threads/sys_info.cc ../threads/sys_info.hh \
  ../filesys/file_system.hh ../filesys/open_file.hh ../lib/utility.hh \
  ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
  ../machine/system_dep.hh ../filesys/directory_entry.hh \
- ../machine/disk.hh ../filesys/raw_file_header.hh
+ ../machine/disk.hh ../filesys/raw_file_header.hh ../machine/mmu.hh \
+ ../machine/exception_type.hh ../machine/disk.hh \
+ ../machine/translation_entry.hh
 system.o: ../threads/system.cc ../threads/system.hh ../threads/thread.hh \
  ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
  ../machine/system_dep.hh ../machine/machine.hh \

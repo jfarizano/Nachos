@@ -36,12 +36,7 @@ sys_info.o: ../threads/sys_info.cc ../threads/sys_info.hh \
  ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
  ../machine/system_dep.hh ../filesys/raw_file_header.hh \
  ../machine/disk.hh ../machine/mmu.hh ../machine/exception_type.hh \
- ../machine/disk.hh ../machine/translation_entry.hh ../machine/disk.cc \
- ../threads/system.hh ../threads/thread.hh ../machine/machine.hh \
- ../machine/mmu.hh ../machine/single_stepper.hh \
- ../userprog/address_space.hh ../machine/translation_entry.hh \
- ../threads/scheduler.hh ../lib/list.hh ../lib/utility.hh \
- ../machine/interrupt.hh ../machine/statistics.hh ../machine/timer.hh
+ ../machine/disk.hh ../machine/translation_entry.hh
 system.o: ../threads/system.cc ../threads/system.hh ../threads/thread.hh \
  ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
  ../machine/system_dep.hh ../machine/machine.hh \

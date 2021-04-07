@@ -1,0 +1,247 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper, margin=1.5cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{babel}
+\usepackage[spanish]{layout}
+\usepackage[article]{ragged2e}
+\usepackage{textcomp}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{proof}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{multirow}
+
+\setlength{\parindent}{0pt}
+
+\title{
+    Entrega 3 \\
+    \large Sistemas Operativos II}
+\author{Mellino, Natalia \and Farizano, Juan Ignacio}
+\date{}
+
+\begin{document}
+\maketitle
+
+\noindent\rule{\textwidth}{1pt}
+
+\begin{enumerate}
+    \item Se prefiere emular una CPU porque de esta forma se simplifica mucho
+          el desarrollo de sistemas operativos al reducir el ciclo
+          compilar-ejecutar-depurar y permite el uso de depuradores ya disponibles.
+    \item La memoria se define como una constante en el archivo \texttt{/machine/mmu.hh} como 
+          \texttt{MEMORY\_SIZE = NUM\_PHYS\_PAGES x PAGE\_SIZE}. Como tenemos 32 páginas
+          y cada una tiene un tamaño de 128 bytes el tamaño de la memoria es 32 x 128 = 4096 bytes.
+    \item  Modificaría la cantidad de páginas. El tamaño de cada página se deja fijo en 128 bytes para 
+           que coincida con el tamaño del sector del disco y proveernos así más simplicidad.
+    \item El disco cuenta con una única superficie dividida en pistas y a su vez, cada pista está dividida 
+          en sectores. Por defecto, el disco de la máquina de Nachos cuenta con 32 pistas y 32 sectores por 
+          cada pista. Luego el tamaño de cada sector, como fue mencionado en el punto anterior, es de 128 bytes. 
+          Como resultado contamos con 32 x 32 x 128 = 131.072 bytes.
+    \item En el archivo \texttt{/machine/encoding.hh} podemos encontrar todas las instrucciones enumeradas, las 
+          instrucciones \texttt{OP\_UNIMP} y \texttt{OP\_RES} no son  simuladas, por lo tanto contamos con un total de 61 instrucciones 
+          MIPS  que simula la máquina virtual.
+    \item Utilizando el comando \texttt{grep} podemos ver que la función main está
+          definida en los siguientes archivos:
+    \begin{itemize}
+        \item \texttt{/bin/fuse/nachosfuse.c}
+        \item \texttt{/bin/out.c}
+        \item \texttt{/bin/coff2noff.c}
+        \item \texttt{/bin/disasm.c}
+        \item \texttt{/bin/readnoff.c}
+        \item \texttt{/bin/main.c}
+        \item \texttt{/bin/coff2flat.c}
+        \item \texttt{/userland/echo.c}
+        \item \texttt{/userland/filetest.c}
+        \item \texttt{/userland/tiny\_shell.c}
+        \item \texttt{/userland/matmult.c}
+        \item \texttt{/userland/touch.c}
+        \item \texttt{/userland/halt.c}
+        \item \texttt{/userland/sort.c}
+        \item \texttt{/userland/shell.c}
+        \item \texttt{/threads/main.c}
+    \end{itemize}
+    Al correr make, en el archivo Makefile.depends, podemos ver que la función
+    main se encuentra en el archivo \texttt{/threads/main.cc}
+    \item
+    \begin{itemize}
+    \item \texttt{Initialize} en \texttt{/threads/system.cc}
+        \begin{itemize}
+            \item \texttt{ASSERT} en \texttt{/lib/assert.hh}
+            \item \texttt{ParseDebugOpts} en \texttt{/threads/system.cc}
+            \item \texttt{RandomInit} en \texttt{/machine/system\_dep.cc}
+            \item \texttt{SetFlags} en \texttt{/lib/debug.cc}
+            \item \texttt{SetOpts} en \texttt{/lib/debug.cc}
+            \item \texttt{TimerInterruptHandler} en \texttt{/threads/system.cc}
+            \item \texttt{SetStatus} en \texttt{/threads/threads.cc}
+            \item \texttt{Enable} en \texttt{/machine/interrupt.cc}
+            \item \texttt{CallOnUserAbort} en \texttt{/machine/system\_dep.cc}
+            \item \texttt{Cleanup} en \texttt{/threads/system.cc}
+            \item \texttt{SetUp} en \texttt{/threads/preemptive.cc}
+            \item \texttt{SetExceptionHandlers} en \texttt{/userprog/exception.cc}
+        \end{itemize}
+    \item \texttt{DEBUG} en \texttt{/lib/utility.hh}
+        \begin{itemize}
+            \item \texttt{Print} en \texttt{/lib/debug.cc}
+        \end{itemize}
+    \item \texttt{SysInfo} en \texttt{/threads/sys\_info.cc}
+    \item \texttt{PrintVersion} en \texttt{/threads/main.cc}
+    \item \texttt{ThreadTest} en \texttt{/threads/thread\_test.cc}
+        \begin{itemize}
+            \item \texttt{DEBUG} en \texttt{/lib/utily.hh}
+            \item \texttt{Choose} en \texttt{/threads/thread\_test.cc}
+            \item \texttt{Run} en \texttt{/threads/thread\_test.cc}
+        \end{itemize}
+    \item \texttt{Halt} en \texttt{/machine/interrupt.cc}
+        \begin{itemize}
+            \item \texttt{Print} en \texttt{/machine/statistics.cc}
+            \item \texttt{Cleanup} en \texttt{/threads/system.cc}
+        \end{itemize}
+    \item \texttt{ASSERT} en \texttt{/lib/assert.hh}
+        \begin{itemize}
+            \item \texttt{Assert} en \texttt{/lib/assert.cc}
+        \end{itemize}
+    \item \texttt{StartProcess} en \texttt{/userprog/prog\_test.cc}
+        \begin{itemize}
+            \item \texttt{ASSERT} en \texttt{/lib/assert.hh}
+            \item \texttt{Open} en \texttt{/filesys/file\_system.cc}
+            \item \texttt{InitRegisters} en \texttt{/userprog/address\_space.cc}
+            \item \texttt{RestoreState} en \texttt{/userprog/address\_space.cc}
+            \item \texttt{Run} en \texttt{/userprog/debugger\_command\_manager.cc}
+        \end{itemize}
+    \item \texttt{ConsoleTest} en \texttt{/userprog/prog\_test.cc}
+    \item 
+        \begin{itemize}
+            \item \texttt{P} en \texttt{/threads/semaphore.cc}
+            \item \texttt{GetChar} en \texttt{/machine/console.cc}
+            \item \texttt{PutChar} en \texttt{/machine/console.cc}
+        \end{itemize}
+    \item \texttt{Copy} en \texttt{/filesys/fs\_test.cc}
+        \begin{itemize}
+            \item \texttt{ASSERT} en \texttt{/lib/assert.hh}
+            \item \texttt{DEBUG} en \texttt{/lib/utility.hh}
+            \item \texttt{Create} en \texttt{/filesys/file\_system.cc}
+            \item \texttt{Open} en \texttt{/filesys/file\_system.cc}
+            \item \texttt{Write} en \texttt{/filesys/open\_file.cc}
+        \end{itemize}
+    \item \texttt{Print} en \texttt{/threads/scheduler.cc}
+        \begin{itemize}
+            \item \texttt{Apply} en \texttt{/lib/list.hh}
+            \item \texttt{ThreadPrint} en \texttt{/threads/scheduler.cc}
+        \end{itemize}
+    \item \texttt{Remove} en \texttt{/lib/list.hh}
+    \item \texttt{List} en \texttt{/filesys/directory.cc}
+    \item \texttt{Check} en \texttt{/filesys/file\_system.cc}
+        \begin{itemize}
+            \item \texttt{DEBUG} en \texttt{/lib/utility.hh}
+            \item \texttt{Mark} en \texttt{/lib/bitmap.cc}
+            \item \texttt{GetRaw} en \texttt{/filesys/file\_header.cc}
+            \item \texttt{FetchFrom} en \texttt{/filesys/file\_header.cc}
+            \item \texttt{CheckForError} en \texttt{/filesys/file\_system.cc}
+            \item \texttt{CheckFileHeader} en \texttt{/filesys/file\_system.cc}
+            \item \texttt{CheckBitmaps} en \texttt{/filesys/file\_system.cc}
+        \end{itemize}
+    \item \texttt{PerformanceTest} en \texttt{/filesys/fs\_test.cc}
+        \begin{itemize}
+            \item \texttt{Print} en \texttt{/filesys/fs\_test.cc}
+            \item \texttt{FileWrite} en \texttt{/filesys/fs\_test.cc}
+            \item \texttt{FileRead} en \texttt{/filesys/fs\_test.cc}
+            \item \texttt{Remove} en \texttt{/lib/list.hh}
+        \end{itemize}
+    \item \texttt{Delay} en \texttt{/machine/system\_dep.cc}
+    \item \texttt{MailTest} en \texttt{/network/net\_test.cc}
+        \begin{itemize}
+            \item \texttt{Send} en \texttt{/network/post.cc}
+            \item \texttt{Receive} en \texttt{/network/post.cc}
+            \item \texttt{Halt} en \texttt{/machine/interrupt.cc}
+        \end{itemize}
+    \item \texttt{Finish} en \texttt{/threads/thread.cc}
+        \begin{itemize}
+            \item \texttt{SetLevel} en \texttt{/machine/interrupt.cc}
+            \item \texttt{ASSERT} en \texttt{/lib/utility.hh}
+            \item \texttt{DEBUG} en \texttt{/lib/utility.hh}
+            \item \texttt{GetName} en \texttt{/threads/thread.cc}
+            \item \texttt{Sleep} en \texttt{/threads/thread.cc}
+        \end{itemize}
+    \end{itemize}
+    \item
+        \begin{itemize}
+            \item \texttt{ASSERT}: aborta el program en caso de que una condición
+                  no se cumpla.
+            \item \texttt{DEBUG}: muestra por pantalla mensajes de depuración 
+                  brindando al usuario flags de depuración y permitiendole definir las suyas propias.
+        \end{itemize}
+    \item
+        \begin{itemize}
+            \item \; \texttt{+} \;-\; encender todas las banderas de depuración
+            \item \; \texttt{t} \;-\; mensajes sobre sistemas de threads
+            \item \; \texttt{s} \;-\; mensajes sobre semaforos, locks y condiciones
+            \item \; \texttt{i} \;-\; mensajes acerca de emulación de interrupciones
+            \item \; \texttt{m} \;-\; mensajes sobre emulación de la máquina
+            \item \; \texttt{d} \;-\; mensajes sobre emulación del disco
+            \item \; \texttt{f} \;-\; mensajes sobre el sistema de archivos
+            \item \; \texttt{a} \;-\; mensajes sobre el espacio de direcciones
+            \item \; \texttt{e} \;-\; mensajes sobre manejo de excepciones
+            \item \; \texttt{n} \;-\; mensajes sobre emulación de red
+        \end{itemize}
+    \item
+        \begin{itemize}
+            \item \texttt{USER\_PROGRAM} - definida en los makefile de userprog, vmem, network y filesys
+            \item \texttt{FILESYS\_NEEDED} - definida en los makefile de filesys, network, userprog y vmem
+            \item \texttt{FILESYS\_STUB} - definida en userprog y vmem
+            \item \texttt{NETWORK} - definida en network
+        \end{itemize}
+    \item
+        \begin{itemize}
+            \item Opciones generales
+                \begin{itemize}
+                    \item \texttt{-d} -- hace que ciertos mensajes de depuración se muestren
+                    \item \texttt{-do} -- habilita opciones que modifican el comportamiento cuando se imprimen mensajes de depuración
+                    \item \texttt{-p} -- habilita multitarea preemtiva para hilos del kernel
+                    \item \texttt{-rs} -- hace que ocurra 'yield' en lugares aleatorios
+                    \item \texttt{-z} -- imprime información sobre la versión y copyright y sale
+                \end{itemize}
+            \item Opciones de hilos
+                \begin{itemize}
+                    \item \texttt{-tt} -- prueba el subsistema de threads, se le pide al usuario 
+                          elegir un test a correr de entre una colección de tests disponibles
+                \end{itemize}
+            \item Opciones de \texttt{USER\_PROGRAM}
+                \begin{itemize}
+                    \item \texttt{-s} -- causa que el programa se ejecute en modo de un solo paso
+                    \item \texttt{x} -- corre un programa de usuario
+                    \item \texttt{-tc} -- prueba la consola
+                \end{itemize}
+            \item Opciones del sistema de archivos
+                \begin{itemize}
+                    \item \texttt{-f} -- causa que el disco físico sea formateado
+                    \item \texttt{-cp} -- copia un archivo de UNIX a nachos
+                    \item \texttt{-pr} -- imprime un archivo de nachos por la salida standard
+                    \item \texttt{rm} -- elimina un archivo nachos del sistema de archivos
+                    \item \texttt{ls} -- lista los contenidos del directorio de nachos
+                    \item \texttt{-D} -- imprime contenidos del sistema de archivos entero
+                    \item \texttt{-c} -- verifica la integridad del sistema de archivos
+                    \item \texttt{-tf} -- testea la performance del sistema de archivos de nachos
+                \end{itemize}
+            \item Opciones de red
+                \begin{itemize}
+                    \item \texttt{-n} -- setea la confiabilidad de la red
+                    \item \texttt{-id} -- setea el host id de esta maquinan (necesario para la red)
+                    \item \texttt{-tn} -- corre un simple test del software de red de nachos  
+                \end{itemize}
+        \end{itemize}
+
+        \addtocounter{enumi}{1} % Suma al contador de enumerate.
+        
+        \item La primera es una lista enlazada simple donde el acceso de los
+              hilos no tiene restricciones, en cambio en la clase SynchList, si la
+              lista está vacía y un hilo quiere remover un elemento de ella, deberá
+              esperar a que contenga un elemento. Además, sólo un thread a la vez
+              puede acceder a las estructuras de datos de lalista.
+        \addtocounter{enumi}{3}
+        \item De forma análoga al problema de la entrega 1, se soluciona realizando
+              el yield recién luego de incrementar el contador.
+\end{enumerate}
+
+\end{document}

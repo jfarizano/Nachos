@@ -12,7 +12,7 @@
 
 #ifdef SEMAPHORE_TEST
 #include "semaphore.hh"
-Semaphore *SEMAPHORE_TURNS = new Semaphore("Test", 3);
+Semaphore *SEMAPHORE_TURNS = new Semaphore("Test", 1);
 #endif
 
 static const unsigned NUM_TURNSTILES = 2;
@@ -26,9 +26,17 @@ Turnstile(void *n_)
     unsigned *n = (unsigned *) n_;
 
     for (unsigned i = 0; i < ITERATIONS_PER_TURNSTILE; i++) {
+        #ifdef SEMAPHORE_TEST
+        DEBUG('s', "Turnstile %u doing P\n", *n);
+        SEMAPHORE_TURNS->P();
+        #endif
         int temp = count;
         currentThread->Yield();
         count = temp + 1;
+        #ifdef SEMAPHORE_TEST
+        DEBUG('s', "Turnstile %u doing V\n", *n);
+        SEMAPHORE_TURNS->V();
+        #endif
     }
     printf("Turnstile %u finished. Count is now %u.\n", *n, count);
     done[*n] = true;
