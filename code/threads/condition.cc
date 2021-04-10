@@ -16,6 +16,7 @@
 
 
 #include "condition.hh"
+#include "system.hh"
 
 
 /// Dummy functions -- so we can compile our later assignments.
@@ -25,12 +26,12 @@
 
 Condition::Condition(const char *debugName, Lock *conditionLock)
 {
-    // TODO
+
 }
 
 Condition::~Condition()
 {
-    // TODO
+
 }
 
 const char *
@@ -42,17 +43,18 @@ Condition::GetName() const
 void
 Condition::Wait()
 {
-    // TODO
+
+
 }
 
 void
 Condition::Signal()
 {
-    // TODO
+
 }
 
 void
 Condition::Broadcast()
 {
-    // TODO
+
 }
