@@ -59,7 +59,7 @@ private:
     /// For debugging.
     const char *name;
 
-    /// Semaphore used for locking
+    /// Semaphore used for locking.
     Semaphore *semaphore;
 
     /// Thread that possesses the lock.

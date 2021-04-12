@@ -74,10 +74,17 @@ public:
 
 private:
 
+    // Debug name.
     const char *name;
 
-    // Lock used
+    // Lock used.
     Lock* lock;
+
+    // Number of threads waiting for signal or broadcast.
+    int waitingThreads;
+
+    // Semaphore used to put waiting threads on sleep and later wake them up.
+    Semaphore *waitingSem;
 };
 
 

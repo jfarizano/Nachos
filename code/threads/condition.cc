@@ -26,12 +26,14 @@
 
 Condition::Condition(const char *debugName, Lock *conditionLock)
 {
-
+    name = debugName;
+    waitingThreads = 0;
+    waitingSem = new Semaphore(name, 0);
 }
 
 Condition::~Condition()
 {
-
+    delete waitingSem;
 }
 
 const char *
@@ -43,18 +45,30 @@ Condition::GetName() const
 void
 Condition::Wait()
 {
-
-
+    // Release already checks if the current thread has the lock
+    lock->Release();
+    waitingThreads++;
+    waitingSem->P();
 }
 
 void
 Condition::Signal()
 {
+    ASSERT(lock->IsHeldByCurrentThread());
 
+    if (waitingThreads > 0) {
+        waitingSem->V();
+        waitingThreads--;
+    }
 }
 
 void
 Condition::Broadcast()
 {
+    ASSERT(lock->IsHeldByCurrentThread());
 
+    while (waitingThreads > 0) {
+        waitingSem->V();
+        waitingThreads--;
+    }
 }

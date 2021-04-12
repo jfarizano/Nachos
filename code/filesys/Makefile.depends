@@ -19,7 +19,10 @@ condition.o: ../threads/condition.cc ../threads/condition.hh \
  ../machine/translation_entry.hh ../machine/single_stepper.hh \
  ../userprog/address_space.hh ../filesys/file_system.hh \
  ../filesys/open_file.hh ../filesys/directory_entry.hh ../machine/disk.hh \
- ../machine/translation_entry.hh ../lib/list.hh ../lib/utility.hh
+ ../machine/translation_entry.hh ../lib/list.hh ../lib/utility.hh \
+ ../threads/system.hh ../threads/scheduler.hh ../machine/interrupt.hh \
+ ../machine/statistics.hh ../machine/timer.hh ../filesys/synch_disk.hh \
+ ../threads/lock.hh ../threads/semaphore.hh
 lock.o: ../threads/lock.cc ../threads/lock.hh ../threads/semaphore.hh \
  ../threads/thread.hh ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh \
  ../lib/debug_opts.hh ../machine/system_dep.hh ../machine/machine.hh \
