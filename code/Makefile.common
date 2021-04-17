@@ -34,7 +34,8 @@ LDFLAGS  =
 # Name of the final executable file in each subdirectory.
 PROGRAM = nachos
 
-THREAD_HDR = threads/condition.hh             \
+THREAD_HDR = threads/channel.hh               \
+             threads/condition.hh             \
              threads/copyright.h              \
              threads/lock.hh                  \
              threads/scheduler.hh             \
@@ -58,6 +59,7 @@ THREAD_HDR = threads/condition.hh             \
              machine/timer.hh                 \
              threads/preemptive.hh
 THREAD_SRC = threads/main.cc                  \
+             threads/channel.cc               \
              threads/condition.cc             \
              threads/lock.cc                  \
              threads/scheduler.cc             \

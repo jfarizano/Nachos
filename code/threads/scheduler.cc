@@ -27,12 +27,21 @@
 /// Initialize the list of ready but not running threads to empty.
 Scheduler::Scheduler()
 {
-    readyList = new List<Thread *>;
+    readyList = new List<Thread*>*[NUMBER_QUEUES];
+
+    for (unsigned i = 0; i < NUMBER_QUEUES; i++) {
+        readyList[i] = new List<Thread*>;
+    }
+
 }
 
 /// De-allocate the list of ready threads.
 Scheduler::~Scheduler()
 {
+    for (unsigned i = 0; i < NUMBER_QUEUES; i++) {
+        delete readyList[i];
+    }
+
     delete readyList;
 }
 
@@ -45,10 +54,10 @@ Scheduler::ReadyToRun(Thread *thread)
 {
     ASSERT(thread != nullptr);
 
-    DEBUG('t', "Putting thread %s on ready list\n", thread->GetName());
+    DEBUG('t', "Putting thread %s on queue %u\n", thread->GetName(), thread->GetPriority());
 
     thread->SetStatus(READY);
-    readyList->Append(thread);
+    readyList[thread->GetPriority()]->Append(thread);
 }
 
 /// Return the next thread to be scheduled onto the CPU.
@@ -59,7 +68,22 @@ Scheduler::ReadyToRun(Thread *thread)
 Thread *
 Scheduler::FindNextToRun()
 {
-    return readyList->Pop();
+    unsigned i = 0;
+    bool found = false;
+    Thread* next = nullptr;
+    while(i < NUMBER_QUEUES && !found)
+    {
+        if(readyList[i]->IsEmpty())
+        {
+            i++;
+        }
+        else
+        {
+            next = readyList[i]->Pop();
+            found = true;
+        }
+    }
+    return next;
 }
 
 /// Dispatch the CPU to `nextThread`.
@@ -138,6 +162,19 @@ ThreadPrint(Thread *t)
 void
 Scheduler::Print()
 {
-    printf("Ready list contents:\n");
-    readyList->Apply(ThreadPrint);
+    printf("Queues contents:\n");
+
+    for (unsigned i = 0; i < NUMBER_QUEUES; i++)
+    {
+        printf("Queue number %u\n", i);
+        readyList[i]->Apply(ThreadPrint);
+    }
+
+}
+
+void
+Scheduler::SwitchPriority(Thread *thread, unsigned newPriority)
+{
+    readyList[thread->GetPriority()]->Remove(thread);
+    ReadyToRun(thread);
 }

@@ -97,7 +97,7 @@ private:
 public:
 
     /// Initialize a `Thread`.
-    Thread(const char *debugName);
+    Thread(const char *debugName, bool joinableT, unsigned startPriority);
 
     /// Deallocate a Thread.
     ///
@@ -128,6 +128,15 @@ public:
 
     void Print() const;
 
+    void Join();
+
+    unsigned GetPriority();
+
+    void UpdatePriority(unsigned newPriority);
+
+    void RestorePriority();
+
+
 private:
     // Some of the private data for this class is listed above.
 
@@ -143,6 +152,15 @@ private:
 
     /// Allocate a stack for thread.  Used internally by `Fork`.
     void StackAllocate(VoidFunctionPtr func, void *arg);
+
+    // equisde
+    bool joinable; 
+    bool done;
+
+    // For multiqueues
+    unsigned priority;
+    unsigned oldPriority;
+    bool priorityChanged;
 
 #ifdef USER_PROGRAM
     /// User-level CPU register state.

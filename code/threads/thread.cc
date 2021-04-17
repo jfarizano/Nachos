@@ -40,12 +40,17 @@ IsThreadStatus(ThreadStatus s)
 /// `Thread::Fork`.
 ///
 /// * `threadName` is an arbitrary string, useful for debugging.
-Thread::Thread(const char *threadName)
+Thread::Thread(const char *threadName, bool joinableT, unsigned startPriority)
 {
     name     = threadName;
     stackTop = nullptr;
     stack    = nullptr;
     status   = JUST_CREATED;
+    joinable = joinableT;
+    done = false;
+    priority = startPriority;
+    oldPriority = priority;
+    priorityChanged = false;
 #ifdef USER_PROGRAM
     space    = nullptr;
 #endif
@@ -64,6 +69,7 @@ Thread::~Thread()
     DEBUG('t', "Deleting thread \"%s\"\n", name);
 
     ASSERT(this != currentThread);
+
     if (stack != nullptr) {
         SystemDep::DeallocBoundedArray((char *) stack,
                                        STACK_SIZE * sizeof *stack);
@@ -157,6 +163,11 @@ Thread::Finish()
 {
     interrupt->SetLevel(INT_OFF);
     ASSERT(this == currentThread);
+
+    if (joinable) {
+        done = true;
+        Sleep();
+    }
 
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
@@ -311,3 +322,44 @@ Thread::RestoreUserState()
 }
 
 #endif
+
+void
+Thread::Join()
+{
+    ASSERT(this != currentThread);
+    ASSERT(joinable);
+    DEBUG('t', "Joining thread \"%s\"\n", GetName());
+    
+    while (!done) {
+        DEBUG('t', "Joined thread \"%s\" not done, thread \"%s\" keeps waiting\n", GetName(), currentThread->GetName());
+        currentThread->Yield();
+    }
+    
+    DEBUG('t', "Joined thread \"%s\" done, thread \"%s\" stops waiting\n", GetName(), currentThread->GetName());
+
+    scheduler->ReadyToRun(this);
+    currentThread->Yield();
+}
+
+unsigned
+Thread::GetPriority()
+{
+    return priority;
+}
+
+void
+Thread::UpdatePriority(unsigned newPriority)
+{
+    oldPriority = priority;
+    priority = newPriority;
+    priorityChanged = true;
+}
+
+void
+Thread::RestorePriority()
+{
+    if (priorityChanged) {
+        priority = oldPriority;
+        priorityChanged = false;
+    }
+}

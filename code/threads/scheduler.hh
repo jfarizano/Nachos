@@ -14,6 +14,8 @@
 #include "thread.hh"
 #include "lib/list.hh"
 
+const unsigned NUMBER_QUEUES = 5; 
+
 
 /// The following class defines the scheduler/dispatcher abstraction --
 /// the data structures and operations needed to keep track of which
@@ -39,10 +41,13 @@ public:
     // Print contents of ready list.
     void Print();
 
+    // Moves a thread to a different queue
+    void SwitchPriority(Thread *thread, unsigned newPriority);
+
 private:
 
-    // Queue of threads that are ready to run, but not running.
-    List<Thread*> *readyList;
+    // Queues of threads that are ready to run, but not running.
+    List<Thread*> **readyList;
 
 };
 

@@ -9,6 +9,16 @@ main.o: ../threads/main.cc ../threads/copyright.h ../threads/sys_info.hh \
  ../threads/scheduler.hh ../lib/list.hh ../lib/utility.hh \
  ../machine/interrupt.hh ../machine/statistics.hh ../machine/timer.hh \
  ../threads/thread_test.hh
+channel.o: ../threads/channel.cc ../threads/channel.hh \
+ ../threads/condition.hh ../threads/lock.hh ../threads/semaphore.hh \
+ ../threads/thread.hh ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh \
+ ../lib/debug_opts.hh ../machine/system_dep.hh ../machine/machine.hh \
+ ../machine/exception_type.hh ../machine/mmu.hh ../machine/disk.hh \
+ ../machine/translation_entry.hh ../machine/single_stepper.hh \
+ ../userprog/address_space.hh ../filesys/file_system.hh \
+ ../filesys/open_file.hh ../machine/translation_entry.hh ../lib/list.hh \
+ ../lib/utility.hh ../threads/scheduler.hh ../threads/system.hh \
+ ../machine/interrupt.hh ../machine/statistics.hh ../machine/timer.hh
 condition.o: ../threads/condition.cc ../threads/condition.hh \
  ../threads/lock.hh ../threads/semaphore.hh ../threads/thread.hh \
  ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
@@ -17,7 +27,7 @@ condition.o: ../threads/condition.cc ../threads/condition.hh \
  ../machine/translation_entry.hh ../machine/single_stepper.hh \
  ../userprog/address_space.hh ../filesys/file_system.hh \
  ../filesys/open_file.hh ../machine/translation_entry.hh ../lib/list.hh \
- ../lib/utility.hh ../threads/system.hh ../threads/scheduler.hh \
+ ../lib/utility.hh ../threads/scheduler.hh ../threads/system.hh \
  ../machine/interrupt.hh ../machine/statistics.hh ../machine/timer.hh
 lock.o: ../threads/lock.cc ../threads/lock.hh ../threads/semaphore.hh \
  ../threads/thread.hh ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh \
@@ -26,7 +36,7 @@ lock.o: ../threads/lock.cc ../threads/lock.hh ../threads/semaphore.hh \
  ../machine/translation_entry.hh ../machine/single_stepper.hh \
  ../userprog/address_space.hh ../filesys/file_system.hh \
  ../filesys/open_file.hh ../machine/translation_entry.hh ../lib/list.hh \
- ../lib/utility.hh ../threads/system.hh ../threads/scheduler.hh \
+ ../lib/utility.hh ../threads/scheduler.hh ../threads/system.hh \
  ../machine/interrupt.hh ../machine/statistics.hh ../machine/timer.hh
 scheduler.o: ../threads/scheduler.cc ../threads/scheduler.hh \
  ../threads/thread.hh ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh \
@@ -266,6 +276,15 @@ mmu.o: ../machine/mmu.cc ../machine/mmu.hh ../machine/exception_type.hh \
  ../machine/disk.hh ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh \
  ../lib/debug_opts.hh ../machine/system_dep.hh \
  ../machine/translation_entry.hh ../machine/endianness.hh
+channel.o: ../threads/channel.hh ../threads/condition.hh \
+ ../threads/lock.hh ../threads/semaphore.hh ../threads/thread.hh \
+ ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
+ ../machine/system_dep.hh ../machine/machine.hh \
+ ../machine/exception_type.hh ../machine/mmu.hh ../machine/disk.hh \
+ ../machine/translation_entry.hh ../machine/single_stepper.hh \
+ ../userprog/address_space.hh ../filesys/file_system.hh \
+ ../filesys/open_file.hh ../machine/translation_entry.hh ../lib/list.hh \
+ ../lib/utility.hh ../threads/scheduler.hh
 condition.o: ../threads/condition.hh ../threads/lock.hh \
  ../threads/semaphore.hh ../threads/thread.hh ../lib/utility.hh \
  ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
@@ -274,7 +293,7 @@ condition.o: ../threads/condition.hh ../threads/lock.hh \
  ../machine/translation_entry.hh ../machine/single_stepper.hh \
  ../userprog/address_space.hh ../filesys/file_system.hh \
  ../filesys/open_file.hh ../machine/translation_entry.hh ../lib/list.hh \
- ../lib/utility.hh
+ ../lib/utility.hh ../threads/scheduler.hh
 copyright.o: ../threads/copyright.h
 lock.o: ../threads/lock.hh ../threads/semaphore.hh ../threads/thread.hh \
  ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
@@ -283,7 +302,7 @@ lock.o: ../threads/lock.hh ../threads/semaphore.hh ../threads/thread.hh \
  ../machine/translation_entry.hh ../machine/single_stepper.hh \
  ../userprog/address_space.hh ../filesys/file_system.hh \
  ../filesys/open_file.hh ../machine/translation_entry.hh ../lib/list.hh \
- ../lib/utility.hh
+ ../lib/utility.hh ../threads/scheduler.hh
 scheduler.o: ../threads/scheduler.hh ../threads/thread.hh \
  ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
  ../machine/system_dep.hh ../machine/machine.hh \
@@ -308,7 +327,7 @@ synch_list.o: ../threads/synch_list.hh ../threads/condition.hh \
  ../machine/translation_entry.hh ../machine/single_stepper.hh \
  ../userprog/address_space.hh ../filesys/file_system.hh \
  ../filesys/open_file.hh ../machine/translation_entry.hh ../lib/list.hh \
- ../lib/utility.hh
+ ../lib/utility.hh ../threads/scheduler.hh
 sys_info.o: ../threads/sys_info.hh
 system.o: ../threads/system.hh ../threads/thread.hh ../lib/utility.hh \
  ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \

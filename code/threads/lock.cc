@@ -41,15 +41,23 @@ Lock::Acquire()
 {
     ASSERT(!IsHeldByCurrentThread());
 
+    if (threadLocking != nullptr) {
+        if(currentThread->GetPriority() > threadLocking->GetPriority()) {
+            threadLocking->UpdatePriority(currentThread->GetPriority());
+            scheduler->SwitchPriority(threadLocking, currentThread->GetPriority());
+        }
+    }
+    
     semaphore->P();
     threadLocking = currentThread;
+    
 }
 
 void
 Lock::Release()
 {
     ASSERT(IsHeldByCurrentThread());
-
+    currentThread->RestorePriority();
     semaphore->V();
     threadLocking = nullptr;
 }

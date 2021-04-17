@@ -18,6 +18,7 @@
 #define NACHOS_THREADS_LOCK__HH
 
 #include "semaphore.hh"
+#include "scheduler.hh"
 
 
 /// This class defines a “lock”.
