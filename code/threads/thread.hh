@@ -41,6 +41,8 @@
 
 #include "lib/utility.hh"
 
+class Channel;
+
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"
 #include "userprog/address_space.hh"
@@ -153,9 +155,9 @@ private:
     /// Allocate a stack for thread.  Used internally by `Fork`.
     void StackAllocate(VoidFunctionPtr func, void *arg);
 
-    // equisde
+    
     bool joinable; 
-    bool done;
+    Channel *channel;
 
     // For multiqueues
     unsigned priority;

@@ -20,6 +20,7 @@
 #include "thread.hh"
 #include "switch.h"
 #include "system.hh"
+#include "channel.hh"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -47,10 +48,14 @@ Thread::Thread(const char *threadName, bool joinableT, unsigned startPriority)
     stack    = nullptr;
     status   = JUST_CREATED;
     joinable = joinableT;
-    done = false;
     priority = startPriority;
     oldPriority = priority;
     priorityChanged = false;
+
+    if (joinable) {
+        channel = new Channel(name);
+    }
+
 #ifdef USER_PROGRAM
     space    = nullptr;
 #endif
@@ -165,8 +170,7 @@ Thread::Finish()
     ASSERT(this == currentThread);
 
     if (joinable) {
-        done = true;
-        Sleep();
+        channel->Send(1);
     }
 
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
@@ -330,15 +334,11 @@ Thread::Join()
     ASSERT(joinable);
     DEBUG('t', "Joining thread \"%s\"\n", GetName());
     
-    while (!done) {
-        DEBUG('t', "Joined thread \"%s\" not done, thread \"%s\" keeps waiting\n", GetName(), currentThread->GetName());
-        currentThread->Yield();
-    }
+    int message = 0;
+    channel->Receive(&message);
+    delete channel;
     
     DEBUG('t', "Joined thread \"%s\" done, thread \"%s\" stops waiting\n", GetName(), currentThread->GetName());
-
-    scheduler->ReadyToRun(this);
-    currentThread->Yield();
 }
 
 unsigned

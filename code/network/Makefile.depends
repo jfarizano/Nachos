@@ -113,7 +113,7 @@ thread.o: ../threads/thread.cc ../threads/thread.hh ../lib/utility.hh \
  ../machine/statistics.hh ../machine/timer.hh ../filesys/synch_disk.hh \
  ../threads/lock.hh ../threads/semaphore.hh ../threads/semaphore.hh \
  ../network/post.hh ../machine/network.hh ../threads/synch_list.hh \
- ../threads/condition.hh ../threads/lock.hh
+ ../threads/condition.hh ../threads/lock.hh ../threads/channel.hh
 thread_test.o: ../threads/thread_test.cc ../threads/thread_test_garden.hh \
  ../threads/thread_test_prod_cons.hh ../threads/thread_test_simple.hh \
  ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
