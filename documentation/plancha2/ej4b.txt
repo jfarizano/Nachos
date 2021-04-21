@@ -1,0 +1,3 @@
+No es posible realizar lo mismo con los semáforos ya que no podemos garantizar el saber cuales 
+hilo están ocupando los recursos. Además de que es posible iniciar un semáforo en 0 y no hay
+hilos a los cuales aumentarles su prioridad.

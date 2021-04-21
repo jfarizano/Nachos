@@ -156,7 +156,11 @@ private:
     void StackAllocate(VoidFunctionPtr func, void *arg);
 
     
+    // Bool used to know if join is going to be used on this thread
     bool joinable; 
+
+    // And channel used to block the parent thread until the child thread
+    // finished 
     Channel *channel;
 
     // For multiqueues
