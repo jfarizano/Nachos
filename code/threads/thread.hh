@@ -119,7 +119,7 @@ public:
     void Sleep();
 
     /// The thread is done executing.
-    void Finish();
+    void Finish(int status);
 
     /// Check if thread has overflowed its stack.
     void CheckOverflow() const;

@@ -40,7 +40,7 @@ Turnstile(void *n_)
     }
     printf("Turnstile %u finished. Count is now %u.\n", *n, count);
     delete n;
-    currentThread->Finish();
+    currentThread->Finish(0);
 }
 
 void

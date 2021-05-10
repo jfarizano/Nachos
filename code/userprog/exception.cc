@@ -103,14 +103,122 @@ SyscallHandler(ExceptionType _et)
             }
 
             DEBUG('e', "`Create` requested for file `%s`.\n", filename);
+
+            if (!fileSystem->Create(filename, 0)){
+                DEBUG('e', "Error: file '%s' could not be created.\n", filename);
+            } else {
+                DEBUG('e', "`File `%s` created.\n", filename);
+            }
+
+            break;
+        }
+
+        case SC_REMOVE: {
+            int filenameAddr = machine->ReadRegister(4);
+
+            if (filenameAddr == 0) {
+                DEBUG('e', "Error: address to filename string is null.\n");
+            }
+
+            char filename[FILE_NAME_MAX_LEN + 1];
+            if (!ReadStringFromUser(filenameAddr,
+                                    filename, sizeof filename)) {
+                DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
+                      FILE_NAME_MAX_LEN);
+            }
+
+            DEBUG('e', "`Remove` requested for file `%s`.\n", filename);
+
+            if (!fileSystem->Remove(filename)){
+                DEBUG('e', "Error: file '%s' could not be removed.\n", filename);
+            } else {
+                DEBUG('e', "`File `%s` removed.\n", filename);
+            }
+
+            break;
+        }
+
+        case SC_OPEN: {
             break;
         }
 
         case SC_CLOSE: {
-            int fid = machine->ReadRegister(4);
+            OpenFileId fid = machine->ReadRegister(4);
             DEBUG('e', "`Close` requested for id %u.\n", fid);
             break;
         }
+
+        case SC_READ: {          
+            int userAddress = machine->ReadRegister(4);
+            int size = machine->ReadRegister(5);
+            OpenFileId fid = machine->ReadRegister(6);
+            char buffer[size];
+            int bytesRead = 0;
+            
+            if (size <= 0) {
+                DEBUG('e', "Error: Invalid size.\n");
+                break;
+            } else if (fid == CONSOLE_OUTPUT || fid < 0) {
+                DEBUG('e', "Error: Invalid file for reading.\n");
+                break;
+            } else if(fid == CONSOLE_INPUT) {
+                DEBUG('e', "Reading from console.\n");
+                console->ReadBuffer(buffer, size);
+                bytesRead = size;
+                WriteBufferToUser(buffer, userAddress, bytesRead);
+            } else {
+                DEBUG('e', "Not implemented.\n");
+            }
+            
+            machine->WriteRegister(2, bytesRead);
+
+            delete [] buffer;
+
+            break;
+        }
+
+        case SC_WRITE: {
+            int userAddress = machine->readRegister(4);
+            int size = machine->ReadRegister(5);
+            OpenFileId fid = machine->ReadRegister(6);
+            char buffer[size];
+
+            if (size <= 0) {
+                DEBUG('e', "Error: Invalid size.\n");
+                break;
+            } else if (fid <= CONSOLE_INPUT) {
+                DEBUG('e', "Error: Invalid file for writing.\n");
+                break;
+            } else if (fid == CONSOLE_OUTPUT) {
+                DEBUG('e', "Writing from console.\n");
+                ReadBufferFromUser(userAddress, buffer, size);
+                console->WriteBuffer(buffer, size);
+            } else {
+                DEBUG('e', "Not implemented.\n");
+            }
+            
+            delete [] buffer;
+
+            break;
+        }
+
+        case SC_JOIN: {
+            break;
+        }
+
+        case SC_EXEC: {
+            break;
+        }
+
+        case SC_EXIT: {
+            int status = machine->ReadRegister(4);
+            DEBUG('e', "Thread '%s' exiting with status %d", currentThread->GetName(), status);
+
+            currentThread->Finish(status);
+
+            break;
+        }
+        
 
         default:
             fprintf(stderr, "Unexpected system call: id %d.\n", scid);
