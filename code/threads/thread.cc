@@ -58,6 +58,10 @@ Thread::Thread(const char *threadName, bool joinableT, unsigned startPriority)
 
 #ifdef USER_PROGRAM
     space    = nullptr;
+    filesTable = new Table<OpenFile *>;
+    filesTable->Add(nullptr); // CONSOLE_INPUT
+    filesTable->Add(nullptr); // CONSOLE_OUTPUT
+    pid = runningThreads->Add(this);
 #endif
 }
 
@@ -79,6 +83,23 @@ Thread::~Thread()
         SystemDep::DeallocBoundedArray((char *) stack,
                                        STACK_SIZE * sizeof *stack);
     }
+
+    // if (joinable) {
+    //     delete channel;
+    // }
+    
+#ifdef USER_PROGRAM
+    for (unsigned i = 0; i < filesTable->SIZE; i++) {
+        if (filesTable->HasKey(i)) {
+            OpenFile* id = filesTable->Remove(i);
+            if (id != nullptr) {
+                delete id;
+            }
+        }
+    }
+
+    delete filesTable;
+#endif
 }
 
 /// Invoke `(*func)(arg)`, allowing caller and callee to execute
@@ -336,6 +357,7 @@ Thread::Join()
     
     int message = 0;
     channel->Receive(&message);
+
     delete channel;
     
     DEBUG('t', "Joined thread \"%s\" done, thread \"%s\" stops waiting\n", GetName(), currentThread->GetName());

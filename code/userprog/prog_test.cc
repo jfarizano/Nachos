@@ -37,7 +37,7 @@ StartProcess(const char *filename)
     delete executable;
 
     space->InitRegisters();  // Set the initial register values.
-    space->RestoreState();   // Load page table register.
+    space->RestoreState();   // Load page table register.    
 
     machine->Run();  // Jump to the user progam.
     ASSERT(false);   // `machine->Run` never returns; the address space

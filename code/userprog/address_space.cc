@@ -9,6 +9,7 @@
 #include "address_space.hh"
 #include "executable.hh"
 #include "threads/system.hh"
+#include "lib/bitmap.hh"
 
 #include <string.h>
 
@@ -30,7 +31,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
     numPages = DivRoundUp(size, PAGE_SIZE);
     size = numPages * PAGE_SIZE;
 
-    ASSERT(numPages <= NUM_PHYS_PAGES);
+    ASSERT(numPages <= usedPages->CountClear());
       // Check we are not trying to run anything too big -- at least until we
       // have virtual memory.
 
@@ -43,7 +44,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
     for (unsigned i = 0; i < numPages; i++) {
         pageTable[i].virtualPage  = i;
           // For now, virtual page number = physical page number.
-        pageTable[i].physicalPage = i;
+        pageTable[i].physicalPage = usedPages->Find();
         pageTable[i].valid        = true;
         pageTable[i].use          = false;
         pageTable[i].dirty        = false;
@@ -65,15 +66,30 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
         uint32_t virtualAddr = exe.GetCodeAddr();
         DEBUG('a', "Initializing code segment, at 0x%X, size %u\n",
               virtualAddr, codeSize);
-        exe.ReadCodeBlock(&mainMemory[virtualAddr], codeSize, 0);
+        for (uint32_t i = 0; i < codeSize; i++) {
+          // Calculamos el marco físico donde se encuentra
+          uint32_t frame = pageTable[DivRoundDown(virtualAddr + i, PAGE_SIZE)].physicalPage;
+          // Donde dentro de ese marco nos encontramos
+          uint32_t offset = (virtualAddr + i) % PAGE_SIZE;
+          // Y lo traducimos a la dirección física
+          uint32_t physicalAddr = frame * PAGE_SIZE + offset;
+          exe.ReadCodeBlock(&mainMemory[physicalAddr], 1, i);
+        }
     }
     if (initDataSize > 0) {
         uint32_t virtualAddr = exe.GetInitDataAddr();
         DEBUG('a', "Initializing data segment, at 0x%X, size %u\n",
               virtualAddr, initDataSize);
-        exe.ReadDataBlock(&mainMemory[virtualAddr], initDataSize, 0);
+        for (uint32_t i = 0; i < initDataSize; i++) {
+          // Calculamos el marco físico donde se encuentra
+          uint32_t frame = pageTable[DivRoundDown(virtualAddr + i, PAGE_SIZE)].physicalPage;
+          // Donde dentro de ese marco nos encontramos
+          uint32_t offset = (virtualAddr + i) % PAGE_SIZE;
+          // Y lo traducimos a la dirección física
+          uint32_t physicalAddr = frame * PAGE_SIZE + offset;
+          exe.ReadDataBlock(&mainMemory[physicalAddr], 1, i);
+        }
     }
-
 }
 
 /// Deallocate an address space.
@@ -81,6 +97,10 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
 /// Nothing for now!
 AddressSpace::~AddressSpace()
 {
+    for (unsigned i = 0; i < numPages; i++) {
+        usedPages->Clear(pageTable[i].physicalPage);
+    }
+
     delete [] pageTable;
 }
 

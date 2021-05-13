@@ -9,7 +9,7 @@ main(void)
     OpenFileId output = CONSOLE_OUTPUT;
     char       prompt[2] = { '-', '-' };
     char       ch, buffer[60];
-    int        i;
+    int        i = 0;
 
     for (;;) {
         Write(prompt, 2, output);
@@ -20,9 +20,12 @@ main(void)
 
         buffer[--i] = '\0';
 
+
         if (i > 0) {
+            Write("Hola\n", 6, output);
             newProc = Exec(buffer);
-            Join(newProc);
+            Write("Chau\n", 6, output);
+            // Join(newProc);
         }
     }
 

@@ -46,6 +46,7 @@ class Channel;
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"
 #include "userprog/address_space.hh"
+#include "lib/table.hh"
 #endif
 
 #include <stdint.h>
@@ -186,6 +187,10 @@ public:
 
     // User code this thread is running.
     AddressSpace *space;
+
+    int pid;
+
+    Table<OpenFile *> *filesTable;
 #endif
 };
 

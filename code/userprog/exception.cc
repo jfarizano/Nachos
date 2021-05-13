@@ -29,6 +29,16 @@
 
 #include <stdio.h>
 
+void
+InitProcess(void *args)
+{
+    DEBUG('e', "HOLA\n");
+    currentThread->space->InitRegisters();  // Set the initial register values.
+    currentThread->space->RestoreState();   // Load page table register.    
+
+    machine->Run();  // Jump to the user progam.
+}
+
 
 static void
 IncrementPC()
@@ -88,11 +98,72 @@ SyscallHandler(ExceptionType _et)
             DEBUG('e', "Shutdown, initiated by user program.\n");
             interrupt->Halt();
             break;
+        
+        case SC_EXIT: {
+            int status = machine->ReadRegister(4);
+            DEBUG('e', "Thread '%s' exiting with status %d", currentThread->GetName(), status);
+
+            currentThread->Finish(status);
+
+            break;
+        }
+
+        case SC_EXEC: {
+            int filenameAddr = machine->ReadRegister(4);
+            if (filenameAddr == 0) {
+                DEBUG('e', "Error: address to filename string is null.\n");
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            char *filename = new char[FILE_NAME_MAX_LEN + 1];
+            if (!ReadStringFromUser(filenameAddr,
+                                    filename, sizeof filename * FILE_NAME_MAX_LEN)) {
+                DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
+                      FILE_NAME_MAX_LEN);
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            OpenFile *executable = fileSystem->Open(filename);
+
+            if (executable == nullptr) {
+                DEBUG('e', "Error: file '%s' could not be opened.\n", filename);
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            Thread* t = new Thread(filename, true, currentThread->GetPriority());
+            AddressSpace *space = new AddressSpace(executable);
+            t->space = space;
+
+            delete executable;
+
+            t->Fork(InitProcess, nullptr);
+
+            machine->WriteRegister(2, t->pid);
+            break;
+        }
+
+        case SC_JOIN: {
+            SpaceId id = machine->ReadRegister(4);
+            if(!runningThreads->HasKey(id)) {
+                DEBUG('e', "Error: Thread not found.\n");
+                machine->WriteRegister(2, -1);
+            } else {
+                DEBUG('e', "`Join` requested for pid `%u`.\n", id);
+                Thread *child = runningThreads->Get(id);
+                child->Join();
+            }
+            break;
+        }
 
         case SC_CREATE: {
             int filenameAddr = machine->ReadRegister(4);
             if (filenameAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
+                machine->WriteRegister(2, -1);
+                break;
             }
 
             char filename[FILE_NAME_MAX_LEN + 1];
@@ -100,12 +171,16 @@ SyscallHandler(ExceptionType _et)
                                     filename, sizeof filename)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                       FILE_NAME_MAX_LEN);
+                machine->WriteRegister(2, -1);
+                break;
             }
 
             DEBUG('e', "`Create` requested for file `%s`.\n", filename);
 
             if (!fileSystem->Create(filename, 0)){
                 DEBUG('e', "Error: file '%s' could not be created.\n", filename);
+                machine->WriteRegister(2, -1);
+                break;
             } else {
                 DEBUG('e', "`File `%s` created.\n", filename);
             }
@@ -118,6 +193,8 @@ SyscallHandler(ExceptionType _et)
 
             if (filenameAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
+                machine->WriteRegister(2, -1);
+                break;
             }
 
             char filename[FILE_NAME_MAX_LEN + 1];
@@ -125,12 +202,15 @@ SyscallHandler(ExceptionType _et)
                                     filename, sizeof filename)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                       FILE_NAME_MAX_LEN);
+                machine->WriteRegister(2, -1);
+                break;
             }
 
             DEBUG('e', "`Remove` requested for file `%s`.\n", filename);
 
             if (!fileSystem->Remove(filename)){
                 DEBUG('e', "Error: file '%s' could not be removed.\n", filename);
+                machine->WriteRegister(2, -1);
             } else {
                 DEBUG('e', "`File `%s` removed.\n", filename);
             }
@@ -139,12 +219,56 @@ SyscallHandler(ExceptionType _et)
         }
 
         case SC_OPEN: {
+            int filenameAddr = machine->ReadRegister(4);
+
+            if (filenameAddr == 0) {
+                DEBUG('e', "Error: address to filename string is null.\n");
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            char filename[FILE_NAME_MAX_LEN + 1];
+            if (!ReadStringFromUser(filenameAddr,
+                                    filename, sizeof filename)) {
+                DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
+                      FILE_NAME_MAX_LEN);
+                machine->WriteRegister(2, -1);
+                break;
+            }
+
+            DEBUG('e', "`Open` requested for file `%s`.\n", filename);
+
+            OpenFile* file = fileSystem->Open(filename);
+            if (!file) {
+                DEBUG('e', "Error: file '%s' could not be opened.\n", filename);
+                machine->WriteRegister(2, -1);
+                break;
+            } else {
+                OpenFileId fileId = currentThread->filesTable->Add(file);
+                
+                if (fileId == -1) {
+                    DEBUG('e', "Error: Files table full, can not open more files.\n", filename);
+                }
+
+                machine->WriteRegister(2, fileId);
+            }
+
             break;
         }
 
         case SC_CLOSE: {
             OpenFileId fid = machine->ReadRegister(4);
             DEBUG('e', "`Close` requested for id %u.\n", fid);
+
+            if (currentThread->filesTable->HasKey(fid)) {
+                delete currentThread->filesTable->Remove(fid);
+                DEBUG('e', "File id %u closed.\n", fid);
+                machine->WriteRegister(2, fid);
+            } else {
+                DEBUG('e', "Error closing file: id %u does not exist", fid);
+                machine->WriteRegister(2, -1);
+            }
+
             break;
         }
 
@@ -157,69 +281,73 @@ SyscallHandler(ExceptionType _et)
             
             if (size <= 0) {
                 DEBUG('e', "Error: Invalid size.\n");
+                machine->WriteRegister(2, -1);
                 break;
             } else if (fid == CONSOLE_OUTPUT || fid < 0) {
                 DEBUG('e', "Error: Invalid file for reading.\n");
+                machine->WriteRegister(2, -1);
                 break;
             } else if(fid == CONSOLE_INPUT) {
                 DEBUG('e', "Reading from console.\n");
-                console->ReadBuffer(buffer, size);
+                synchConsole->ReadBuffer(buffer, size);
                 bytesRead = size;
                 WriteBufferToUser(buffer, userAddress, bytesRead);
             } else {
-                DEBUG('e', "Not implemented.\n");
+                if (currentThread->filesTable->HasKey(fid)) {
+                    DEBUG('e', "Reading from file with id %u.\n", fid);
+                    OpenFile *file = currentThread->filesTable->Get(fid);
+                    bytesRead = file->Read(buffer, size);
+                    WriteBufferToUser(buffer, userAddress, bytesRead);
+                } else {
+                    DEBUG('e', "File with id %u does not exists.\n", fid);
+                    machine->WriteRegister(2, -1);
+                    break;
+                }
             }
             
             machine->WriteRegister(2, bytesRead);
-
-            delete [] buffer;
 
             break;
         }
 
         case SC_WRITE: {
-            int userAddress = machine->readRegister(4);
+            int userAddress = machine->ReadRegister(4);
             int size = machine->ReadRegister(5);
             OpenFileId fid = machine->ReadRegister(6);
             char buffer[size];
+            int bytesWritten = 0;
 
             if (size <= 0) {
                 DEBUG('e', "Error: Invalid size.\n");
+                machine->WriteRegister(2, -1);
                 break;
             } else if (fid <= CONSOLE_INPUT) {
                 DEBUG('e', "Error: Invalid file for writing.\n");
+                machine->WriteRegister(2, -1);
                 break;
             } else if (fid == CONSOLE_OUTPUT) {
-                DEBUG('e', "Writing from console.\n");
+                DEBUG('e', "Writing to console.\n");
                 ReadBufferFromUser(userAddress, buffer, size);
-                console->WriteBuffer(buffer, size);
+                synchConsole->WriteBuffer(buffer, size);
+                bytesWritten = size;
             } else {
-                DEBUG('e', "Not implemented.\n");
+                if (currentThread->filesTable->HasKey(fid)) {
+                    DEBUG('e', "Writing to file with id %u.\n", fid);
+                    OpenFile *file = currentThread->filesTable->Get(fid);
+                    ReadBufferFromUser(userAddress, buffer, size);
+                    bytesWritten = file->Write(buffer, size);
+                } else {
+                    DEBUG('e', "File with id %u does not exists.\n", fid);
+                    machine->WriteRegister(2, -1);
+                    break;
+                }
             }
-            
-            delete [] buffer;
 
-            break;
-        }
-
-        case SC_JOIN: {
-            break;
-        }
-
-        case SC_EXEC: {
-            break;
-        }
-
-        case SC_EXIT: {
-            int status = machine->ReadRegister(4);
-            DEBUG('e', "Thread '%s' exiting with status %d", currentThread->GetName(), status);
-
-            currentThread->Finish(status);
+            machine->WriteRegister(2, bytesWritten);
 
             break;
         }
         
-
         default:
             fprintf(stderr, "Unexpected system call: id %d.\n", scid);
             ASSERT(false);
