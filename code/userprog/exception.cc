@@ -32,7 +32,6 @@
 void
 InitProcess(void *args)
 {
-    DEBUG('e', "HOLA\n");
     currentThread->space->InitRegisters();  // Set the initial register values.
     currentThread->space->RestoreState();   // Load page table register.    
 
@@ -133,7 +132,7 @@ SyscallHandler(ExceptionType _et)
                 break;
             }
 
-            Thread* t = new Thread(filename, true, currentThread->GetPriority());
+            Thread *t = new Thread(filename, true, currentThread->GetPriority());
             AddressSpace *space = new AddressSpace(executable);
             t->space = space;
 

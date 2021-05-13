@@ -38,26 +38,22 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
     DEBUG('a', "Initializing address space, num pages %u, size %u\n",
           numPages, size);
 
-    // First, set up the translation.
+    char *mainMemory = machine->GetMMU()->mainMemory;
 
+    // First, set up the translation.
     pageTable = new TranslationEntry[numPages];
     for (unsigned i = 0; i < numPages; i++) {
         pageTable[i].virtualPage  = i;
-          // For now, virtual page number = physical page number.
-        pageTable[i].physicalPage = usedPages->Find();
+        int frame = usedPages->Find();
+        pageTable[i].physicalPage = frame;
         pageTable[i].valid        = true;
         pageTable[i].use          = false;
         pageTable[i].dirty        = false;
         pageTable[i].readOnly     = false;
           // If the code segment was entirely on a separate page, we could
           // set its pages to be read-only.
+        memset(mainMemory + frame * PAGE_SIZE, 0, PAGE_SIZE);
     }
-
-    char *mainMemory = machine->GetMMU()->mainMemory;
-
-    // Zero out the entire address space, to zero the unitialized data
-    // segment and the stack segment.
-    memset(mainMemory, 0, size);
 
     // Then, copy in the code and data segments into memory.
     uint32_t codeSize = exe.GetCodeSize();
