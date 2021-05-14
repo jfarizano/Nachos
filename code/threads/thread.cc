@@ -198,6 +198,16 @@ Thread::Finish(int code)
     DEBUG('t', "Finishing thread \"%s\" with code %d\n", GetName(), code);
 
     threadToBeDestroyed = currentThread;
+
+    #ifdef USER_PROGRAM
+        #ifdef FIXHALTWITHTIMER
+            // Ver en tableThreads si hay algo más???
+            if (pid == 0) {
+                interrupt->Halt();
+            }
+        #endif
+    #endif
+
     Sleep();  // Invokes `SWITCH`.
     // Not reached.
 }
@@ -349,19 +359,21 @@ Thread::RestoreUserState()
 
 #endif
 
-void
+int
 Thread::Join()
 {
     ASSERT(this != currentThread);
     ASSERT(joinable);
     DEBUG('t', "Joining thread \"%s\"\n", GetName());
     
-    int message = 0;
+    int message;
     channel->Receive(&message);
 
     delete channel;
     
     DEBUG('t', "Joined thread \"%s\" done, thread \"%s\" stops waiting\n", GetName(), currentThread->GetName());
+
+    return message;
 }
 
 unsigned

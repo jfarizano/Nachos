@@ -260,7 +260,7 @@ exception.o: ../userprog/exception.cc ../userprog/transfer.hh \
  ../machine/interrupt.hh ../machine/statistics.hh ../machine/timer.hh \
  ../userprog/synch_console.hh ../machine/console.hh ../threads/lock.hh \
  ../threads/semaphore.hh ../threads/semaphore.hh ../lib/bitmap.hh \
- ../filesys/open_file.hh
+ ../filesys/open_file.hh ../userprog/args.hh
 prog_test.o: ../userprog/prog_test.cc ../userprog/address_space.hh \
  ../filesys/file_system.hh ../filesys/open_file.hh ../lib/utility.hh \
  ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \

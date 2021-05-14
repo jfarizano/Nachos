@@ -26,6 +26,7 @@
 #include "syscall.h"
 #include "filesys/directory_entry.hh"
 #include "threads/system.hh"
+#include "args.hh"
 
 #include <stdio.h>
 
@@ -34,6 +35,19 @@ InitProcess(void *args)
 {
     currentThread->space->InitRegisters();  // Set the initial register values.
     currentThread->space->RestoreState();   // Load page table register.    
+
+    if (args != nullptr) {
+        // Copio los argumentos en espacio de usuario
+        unsigned argc = WriteArgs((char**) args);
+        // Guardo la cantidad de args en el registro 4
+        machine->WriteRegister(4, argc);
+        // WriteArgs deja el stack apuntando al principio de la estructura de args
+        int sp = machine->ReadRegister(STACK_REG);
+        // Escribo este puntero en el registro 5
+        machine->WriteRegister(5, sp);
+        // Dejo 24 bytes libres por convención de llamada de MIPS.
+        machine->WriteRegister(STACK_REG, sp - 24);
+    }
 
     machine->Run();  // Jump to the user progam.
 }
@@ -109,6 +123,9 @@ SyscallHandler(ExceptionType _et)
 
         case SC_EXEC: {
             int filenameAddr = machine->ReadRegister(4);
+            int argsAddr = machine->ReadRegister(5);
+            int joinable = machine->ReadRegister(6);
+
             if (filenameAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
                 machine->WriteRegister(2, -1);
@@ -132,13 +149,19 @@ SyscallHandler(ExceptionType _et)
                 break;
             }
 
-            Thread *t = new Thread(filename, true, currentThread->GetPriority());
+            Thread *t = new Thread(filename, (bool) joinable, currentThread->GetPriority());
             AddressSpace *space = new AddressSpace(executable);
             t->space = space;
 
             delete executable;
 
-            t->Fork(InitProcess, nullptr);
+            char **args = nullptr;
+
+            if (argsAddr != 0) {
+                args = SaveArgs(argsAddr);
+            }
+
+            t->Fork(InitProcess, args);
 
             machine->WriteRegister(2, t->pid);
             break;
@@ -152,7 +175,7 @@ SyscallHandler(ExceptionType _et)
             } else {
                 DEBUG('e', "`Join` requested for pid `%u`.\n", id);
                 Thread *child = runningThreads->Get(id);
-                child->Join();
+                machine->WriteRegister(2, child->Join());
             }
             break;
         }

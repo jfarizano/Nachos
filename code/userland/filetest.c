@@ -17,9 +17,8 @@ main(void)
 {
     Create("test.txt");
     OpenFileId o = Open("test.txt");
-    // Write("Hello world\n",12,o);
+    Write("Hello world\n",12,o);
     Close(o);
-    // Write("Test\n", 6, 1);
     Exit(0);
     return 0;
 }

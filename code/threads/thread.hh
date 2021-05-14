@@ -131,7 +131,7 @@ public:
 
     void Print() const;
 
-    void Join();
+    int Join();
 
     unsigned GetPriority();
 

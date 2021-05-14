@@ -208,15 +208,16 @@ Initialize(int argc, char **argv)
     stats = new Statistics;      // Collect statistics.
     interrupt = new Interrupt;   // Start up interrupt handling.
     scheduler = new Scheduler;   // Initialize the ready queue.
+#ifndef USER_PROGRAM
     if (randomYield) {           // Start the timer (if needed).
         timer = new Timer(TimerInterruptHandler, 0, randomYield);
     }
-
-    threadToBeDestroyed = nullptr;
-
-#ifdef USER_PROGRAM
+#else
+    timer = new Timer(TimerInterruptHandler, 0, randomYield);
     runningThreads = new Table<Thread *>;
 #endif
+
+    threadToBeDestroyed = nullptr;
 
     // We did not explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a `Thread`
@@ -270,6 +271,14 @@ Cleanup()
 #ifdef USER_PROGRAM
     delete machine;
     delete synchConsole;
+    delete runningThreads;
+
+    #ifdef FIXHALTWITHTIMER
+    if (currentThread != nullptr) {
+        currentThread = nullptr;
+        delete currentThread;
+    }
+    #endif
 #endif
 
 #ifdef FILESYS_NEEDED

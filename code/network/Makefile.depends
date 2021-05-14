@@ -309,7 +309,7 @@ exception.o: ../userprog/exception.cc ../userprog/transfer.hh \
  ../threads/semaphore.hh ../threads/semaphore.hh ../lib/bitmap.hh \
  ../filesys/open_file.hh ../filesys/synch_disk.hh ../network/post.hh \
  ../machine/network.hh ../threads/synch_list.hh ../threads/condition.hh \
- ../threads/lock.hh
+ ../threads/lock.hh ../userprog/args.hh
 prog_test.o: ../userprog/prog_test.cc ../userprog/address_space.hh \
  ../filesys/file_system.hh ../filesys/open_file.hh ../lib/utility.hh \
  ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
