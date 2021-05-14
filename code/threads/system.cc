@@ -268,17 +268,19 @@ Cleanup()
     delete postOffice;
 #endif
 
-#ifdef USER_PROGRAM
-    delete machine;
-    delete synchConsole;
-    delete runningThreads;
-
+#ifdef USER_PROGRAM  
     #ifdef FIXHALTWITHTIMER
     if (currentThread != nullptr) {
+        Thread *t = currentThread;
         currentThread = nullptr;
-        delete currentThread;
+        delete t;
     }
     #endif
+
+    delete machine;
+    delete synchConsole;
+    delete usedPages;
+    delete runningThreads;
 #endif
 
 #ifdef FILESYS_NEEDED
@@ -292,6 +294,7 @@ Cleanup()
     delete timer;
     delete scheduler;
     delete interrupt;
+    delete stats;
 
     exit(0);
 }

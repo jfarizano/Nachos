@@ -98,6 +98,7 @@ Thread::~Thread()
         }
     }
 
+    runningThreads->Remove(pid);
     delete filesTable;
     delete space;
 #endif
@@ -203,7 +204,12 @@ Thread::Finish(int code)
         #ifdef FIXHALTWITHTIMER
             // Ver en tableThreads si hay algo más???
             if (pid == 0) {
-                interrupt->Halt();
+                runningThreads->Remove(0);
+                if (runningThreads->IsEmpty()) {
+                    runningThreads->Add(this);
+                    interrupt->Halt();
+                }
+                runningThreads->Add(this);
             }
         #endif
     #endif
