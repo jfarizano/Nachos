@@ -99,6 +99,7 @@ Thread::~Thread()
     }
 
     delete filesTable;
+    delete space;
 #endif
 }
 

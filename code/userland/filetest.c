@@ -15,13 +15,11 @@
 int
 main(void)
 {
-    // Create("test.txt");
-    // OpenFileId o = Open("test.txt");
+    Create("test.txt");
+    OpenFileId o = Open("test.txt");
     // Write("Hello world\n",12,o);
-    // Close(o);
+    Close(o);
     // Write("Test\n", 6, 1);
-    char buffer[] = "halt";
-    int pid = Exec(buffer);
-    Halt();
+    Exit(0);
     return 0;
 }

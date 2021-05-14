@@ -22,10 +22,8 @@ main(void)
 
 
         if (i > 0) {
-            Write("Hola\n", 6, output);
             newProc = Exec(buffer);
-            Write("Chau\n", 6, output);
-            // Join(newProc);
+            Join(newProc);
         }
     }
 
