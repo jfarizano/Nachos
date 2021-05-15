@@ -27,6 +27,8 @@ main(int argc, char *argv[])
     while (Read(buffer, 1, inputFile) > 0) {
        Write(buffer, 1, outputFile);
     }
+    Close(inputFile);
+    Close(outputFile);
   }
   
   return success;

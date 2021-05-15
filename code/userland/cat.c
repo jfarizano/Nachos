@@ -27,6 +27,7 @@ main(int argc, char *argv[])
     if (buffer[1] != '\n') {
       Write("\n", 1, CONSOLE_OUTPUT);
     }
+    Close(id);
   }
   
   return success;
