@@ -21,7 +21,7 @@
 ///
 /// Open the executable, load it into memory, and jump to it.
 void
-StartProcess(const char *filename)
+ StartProcess(const char *filename)
 {
     ASSERT(filename != nullptr);
 

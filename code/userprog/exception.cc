@@ -235,6 +235,7 @@ SyscallHandler(ExceptionType _et)
                 machine->WriteRegister(2, -1);
             } else {
                 DEBUG('e', "`File `%s` removed.\n", filename);
+                machine->WriteRegister(2, 1);
             }
 
             break;

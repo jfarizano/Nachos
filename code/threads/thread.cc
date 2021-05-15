@@ -202,7 +202,7 @@ Thread::Finish(int code)
 
     #ifdef USER_PROGRAM
         #ifdef FIXHALTWITHTIMER
-            // Ver en tableThreads si hay algo más???
+            // Preguntar esto
             if (pid == 0) {
                 runningThreads->Remove(0);
                 if (runningThreads->IsEmpty()) {
