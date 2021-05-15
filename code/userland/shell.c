@@ -104,6 +104,7 @@ main(void)
     const OpenFileId OUTPUT = CONSOLE_OUTPUT;
     char             line[MAX_LINE_SIZE];
     char            *argv[MAX_ARG_COUNT];
+    int join;
 
     for (;;) {
         WritePrompt(OUTPUT);
@@ -111,6 +112,8 @@ main(void)
         if (lineSize == 0) {
             continue;
         }
+
+        join = line[0] != '&';
 
         if (PrepareArguments(line, argv, MAX_ARG_COUNT) == 0) {
             WriteError("too many arguments.", OUTPUT);
@@ -120,12 +123,16 @@ main(void)
         // Comment and uncomment according to whether command line arguments
         // are given in the system call or not.
         // const SpaceId newProc = Exec(line);
-        const SpaceId newProc = Exec(line, argv, 1);
+        
+         
+        const SpaceId newProc = Exec(join ? line : line + 1, argv, 1);
 
         // TODO: check for errors when calling `Exec`; this depends on how
         //       errors are reported.
 
-        Join(newProc);
+        if (join && newProc >= 0) {
+            Join(newProc);
+        }
         // TODO: is it necessary to check for errors after `Join` too, or
         //       can you be sure that, with the implementation of the system
         //       call handler you made, it will never give an error?; what

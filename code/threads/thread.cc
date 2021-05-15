@@ -201,16 +201,16 @@ Thread::Finish(int code)
     threadToBeDestroyed = currentThread;
 
     #ifdef USER_PROGRAM
+        // Intento de fix, ya que ahora al usar un timer para time-slicing
+        // como hay siempre interrupts, nunca se ejecuta el halt automático
+        // al no haber threads.
         #ifdef FIXHALTWITHTIMER
-            // Preguntar esto
-            if (pid == 0) {
-                runningThreads->Remove(0);
+                runningThreads->Remove(pid);
                 if (runningThreads->IsEmpty()) {
-                    runningThreads->Add(this);
+                    pid = runningThreads->Add(this);
                     interrupt->Halt();
                 }
-                runningThreads->Add(this);
-            }
+                pid = runningThreads->Add(this);
         #endif
     #endif
 

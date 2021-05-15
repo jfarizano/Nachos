@@ -30,7 +30,7 @@ itoa(int n, char *str)
 {
   unsigned i = 0, minus = 0;
 
-  if (n <0) {
+  if (n < 0) {
     minus = 1;
     n *= -1;
   }

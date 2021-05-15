@@ -270,11 +270,13 @@ Cleanup()
 
 #ifdef USER_PROGRAM  
     #ifdef FIXHALTWITHTIMER
-    if (currentThread != nullptr) {
-        Thread *t = currentThread;
         currentThread = nullptr;
-        delete t;
-    }
+        for (unsigned i = 0; i < runningThreads->SIZE; i++) {
+            Thread *t = runningThreads->Get(i);
+            if (t != nullptr) {
+                delete t;
+            }
+        }
     #endif
 
     delete machine;

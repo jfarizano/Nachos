@@ -162,12 +162,17 @@ ThreadPrint(Thread *t)
 void
 Scheduler::Print()
 {
-    printf("Queues contents:\n");
+    printf("Scheduler queues contents:\n");
 
     for (unsigned i = 0; i < NUMBER_QUEUES; i++)
     {
         printf("Queue number %u\n", i);
-        readyList[i]->Apply(ThreadPrint);
+        if (readyList[i]->IsEmpty()) {
+            printf("Is empty\n");
+        } else {
+            readyList[i]->Apply(ThreadPrint);
+            printf("\n");
+        }
     }
 
 }
