@@ -20,9 +20,12 @@ main(int argc, char *argv[])
     puts(OPEN_ERROR);
     return -1;
   } else {
-    char *buffer;
-    while (Read(buffer, 1, id)) {
+    char buffer[1];
+    while (Read(buffer, 1, id) > 0) {
        Write(buffer, 1, CONSOLE_OUTPUT);
+    }
+    if (buffer[1] != '\n') {
+      Write("\n", 1, CONSOLE_OUTPUT);
     }
   }
   

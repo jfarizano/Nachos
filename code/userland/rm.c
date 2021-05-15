@@ -19,5 +19,5 @@ main(int argc, char *argv[])
             success = 0;
         }
     }
-    return !success;    
+    return !success;
 }

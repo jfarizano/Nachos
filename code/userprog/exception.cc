@@ -320,7 +320,9 @@ SyscallHandler(ExceptionType _et)
                     DEBUG('e', "Reading from file with id %u.\n", fid);
                     OpenFile *file = currentThread->filesTable->Get(fid);
                     bytesRead = file->Read(buffer, size);
-                    WriteBufferToUser(buffer, userAddress, bytesRead);
+                    if (bytesRead > 0) {
+                        WriteBufferToUser(buffer, userAddress, bytesRead);
+                    }
                 } else {
                     DEBUG('e', "File with id %u does not exists.\n", fid);
                     machine->WriteRegister(2, -1);
