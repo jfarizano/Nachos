@@ -13,6 +13,12 @@
 static const unsigned MAX_ARG_COUNT  = 32;
 static const unsigned MAX_ARG_LENGTH = 128;
 
+#ifdef USE_TLB
+static const int MAX_MEM_TRIES = 4;
+#else
+static const int MAX_MEM_TRIES = 1;
+#endif
+
 /// Count the number of arguments up to a null (which is not counted).
 ///
 /// Returns true if the number fit in the established limits and false if
@@ -26,7 +32,11 @@ bool CountArgsToSave(int address, unsigned *count)
     int val;
     unsigned c = 0;
     do {
-        machine->ReadMem(address + 4 * c, 4, &val);
+        int tries = 0;
+        for (; tries < 4 && !machine->ReadMem(address + 4 * c, 4, &val); tries++){};
+        if (tries == 4) {
+            ASSERT(false);
+        }
         c++;
     } while (c < MAX_ARG_COUNT && val != 0);
     if (c == MAX_ARG_COUNT && val != 0) {
@@ -60,7 +70,11 @@ SaveArgs(int address)
         args[i] = new char [MAX_ARG_LENGTH];
         int strAddr;
         // For each pointer, read the corresponding string.
-        machine->ReadMem(address + i * 4, 4, &strAddr);
+        int tries = 0;
+        for (; tries < 4 && !machine->ReadMem(address + i * 4, 4, &strAddr); tries++){};
+        if (tries == 4) {
+            ASSERT(false);
+        }
         ReadStringFromUser(strAddr, args[i], MAX_ARG_LENGTH);
     }
     args[count] = nullptr;  // Write the trailing null.
@@ -97,9 +111,17 @@ WriteArgs(char **args)
     sp -= c * 4 + 4;  // Make room for `argv`, including the trailing null.
     // Write each argument's address.
     for (unsigned i = 0; i < c; i++) {
-        machine->WriteMem(sp + 4 * i, 4, argsAddress[i]);
+        int tries = 0;
+        for (; tries < 4 && !machine->WriteMem(sp + 4 * i, 4, argsAddress[i]); tries++){};
+        if (tries == 4) {
+            ASSERT(false);
+        }
     }
-    machine->WriteMem(sp + 4 * c, 4, 0);  // The last is null.
+    int tries = 0;
+    for (; tries < MAX_MEM_TRIES && !machine->WriteMem(sp + 4 * c, 4, 0); tries++){};  // The last is null.
+    if (tries == MAX_MEM_TRIES) {
+        ASSERT(false);
+    }
 
     machine->WriteRegister(STACK_REG, sp);
     return c;

@@ -99,6 +99,7 @@ Machine::ReadMem(unsigned addr, unsigned size, int *value)
         RaiseException(e, addr);
         return false;
     }
+    stats->numPageHits++;
     return true;
 }
 
@@ -110,6 +111,7 @@ Machine::WriteMem(unsigned addr, unsigned size, int value)
         RaiseException(e, addr);
         return false;
     }
+    stats->numPageHits++;
     return true;
 }
 

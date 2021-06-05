@@ -27,6 +27,7 @@
 Condition::Condition(const char *debugName, Lock *conditionLock)
 {
     name = debugName;
+    lock = conditionLock;
     waitingThreads = 0;
     waitingSem = new Semaphore(name, 0);
 }
@@ -49,6 +50,7 @@ Condition::Wait()
     lock->Release();
     waitingThreads++;
     waitingSem->P();
+    lock->Acquire();
 }
 
 void

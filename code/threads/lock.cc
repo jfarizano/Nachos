@@ -42,7 +42,8 @@ Lock::Acquire()
     ASSERT(!IsHeldByCurrentThread());
 
     if (threadLocking != nullptr) {
-        if(currentThread->GetPriority() > threadLocking->GetPriority()) {
+        if(currentThread->GetPriority() < threadLocking->GetPriority()) {
+            DEBUG('t', "Thread with higher priority %s locked by thread %s, updating priority\n", currentThread->GetName(), threadLocking->GetName());
             threadLocking->UpdatePriority(currentThread->GetPriority());
             scheduler->SwitchPriority(threadLocking, currentThread->GetPriority());
         }
@@ -58,8 +59,8 @@ Lock::Release()
 {
     ASSERT(IsHeldByCurrentThread());
     currentThread->RestorePriority();
-    semaphore->V();
     threadLocking = nullptr;
+    semaphore->V();
 }
 
 bool

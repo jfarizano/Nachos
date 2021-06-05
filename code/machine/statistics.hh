@@ -47,6 +47,8 @@ public:
     /// Number of virtual memory page faults.
     unsigned long numPageFaults;
 
+    unsigned long numPageHits;
+
     /// Number of packets sent over the network.
     unsigned long numPacketsSent;
 

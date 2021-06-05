@@ -8,14 +8,14 @@ int
 main(int argc, char *argv[])
 {
     if (argc < 2) {
-        puts(ARGC_ERROR);
+        puts2(ARGC_ERROR);
         Exit(1);
     }
     
     int success = 1;
     for (unsigned i = 1; i < argc; i++) {
         if (Remove(argv[i]) < 0) {
-            puts(REMOVE_ERROR);
+            puts2(REMOVE_ERROR);
             success = 0;
         }
     }

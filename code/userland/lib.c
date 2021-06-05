@@ -9,7 +9,7 @@ strlen(const char *s)
 }
 
 void 
-puts(const char *s)
+puts2(const char *s)
 {
     Write(s, strlen(s), CONSOLE_OUTPUT);
     Write("\n", 1, CONSOLE_OUTPUT);

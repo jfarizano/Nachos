@@ -7,6 +7,11 @@
 #include "lib/utility.hh"
 #include "threads/system.hh"
 
+#ifdef USE_TLB
+static const int MAX_MEM_TRIES = 4;
+#else
+static const int MAX_MEM_TRIES = 1;
+#endif
 
 void ReadBufferFromUser(int userAddress, char *outBuffer,
                         unsigned byteCount)
@@ -19,7 +24,12 @@ void ReadBufferFromUser(int userAddress, char *outBuffer,
     do {
         int temp;
         count++;
-        ASSERT(machine->ReadMem(userAddress++, 1, &temp));
+        int tries = 0;
+        for (; tries < MAX_MEM_TRIES && !machine->ReadMem(userAddress, 1, &temp); tries++){};
+        if (tries == MAX_MEM_TRIES) {
+            ASSERT(false);
+        }
+        userAddress++;
         *outBuffer = (unsigned char) temp;
         outBuffer++;
     } while (count < byteCount);
@@ -37,7 +47,12 @@ bool ReadStringFromUser(int userAddress, char *outString,
     do {
         int temp;
         count++;
-        ASSERT(machine->ReadMem(userAddress++, 1, &temp));
+        int tries = 0;
+        for (; tries < MAX_MEM_TRIES && !machine->ReadMem(userAddress, 1, &temp); tries++){};
+        if (tries == MAX_MEM_TRIES) {
+            ASSERT(false);
+        }
+        userAddress++;
         *outString = (unsigned char) temp;
     } while (*outString++ != '\0' && count < maxByteCount);
 
@@ -54,7 +69,12 @@ void WriteBufferToUser(const char *buffer, int userAddress,
     unsigned count = 0;
     do {
         int temp = (int) buffer[count++];
-        ASSERT(machine->WriteMem(userAddress++, 1, temp));
+        int tries = 0;
+        for (; tries < MAX_MEM_TRIES && !machine->WriteMem(userAddress, 1, temp); tries++){};
+        if (tries == MAX_MEM_TRIES) {
+            ASSERT(false);
+        }
+        userAddress++;
     } while (count < byteCount);
 }
 
@@ -65,6 +85,11 @@ void WriteStringToUser(const char *string, int userAddress)
 
     do {
         int temp = (int) *string;
-        ASSERT(machine->WriteMem(userAddress++, 1, temp));
+        int tries = 0;
+        for (; tries < MAX_MEM_TRIES && !machine->WriteMem(userAddress, 1, temp); tries++){};
+        if (tries == MAX_MEM_TRIES) {
+            ASSERT(false);
+        }
+        userAddress++;
     } while (*string++ != '\0');
 }

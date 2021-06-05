@@ -153,8 +153,6 @@ SyscallHandler(ExceptionType _et)
             AddressSpace *space = new AddressSpace(executable);
             t->space = space;
 
-            delete executable;
-
             char **args = nullptr;
 
             if (argsAddr != 0) {
@@ -387,6 +385,39 @@ SyscallHandler(ExceptionType _et)
     IncrementPC();
 }
 
+static void
+PageFaultHandler(ExceptionType _et)
+{
+    int badVAddr = machine->ReadRegister(BAD_VADDR_REG);
+    unsigned vpn = badVAddr / PAGE_SIZE;
+    static int circularIndex = 0;
+    DEBUG('e', "Page fault in thread %s, virtual page %u, badVAddr %u\n",
+         currentThread->GetName(), vpn, badVAddr);
+
+    TranslationEntry entry = currentThread->space->GetTranslationEntry(vpn);
+
+    #ifdef DEMAND_LOADING
+    if (!entry.valid || entry.virtualPage == currentThread->space->numPages + 1) {
+        entry.physicalPage = currentThread->space->LoadPage(vpn);
+        entry.virtualPage = vpn;
+        entry.valid = true;
+    }
+    #endif
+
+    machine->GetMMU()->tlb[circularIndex] = entry;
+
+    circularIndex++;
+    circularIndex %= TLB_SIZE;
+    stats->numPageFaults++;
+}
+
+static void
+ReadOnlyHandler(ExceptionType _et)
+{   
+    fprintf(stderr, "Cannot write on page marked as read only :'(\n");
+    ASSERT(false);
+    return;
+}
 
 /// By default, only system calls have their own handler.  All other
 /// exception types are assigned the default handler.
@@ -395,8 +426,8 @@ SetExceptionHandlers()
 {
     machine->SetHandler(NO_EXCEPTION,            &DefaultHandler);
     machine->SetHandler(SYSCALL_EXCEPTION,       &SyscallHandler);
-    machine->SetHandler(PAGE_FAULT_EXCEPTION,    &DefaultHandler);
-    machine->SetHandler(READ_ONLY_EXCEPTION,     &DefaultHandler);
+    machine->SetHandler(PAGE_FAULT_EXCEPTION,    &PageFaultHandler);
+    machine->SetHandler(READ_ONLY_EXCEPTION,     &ReadOnlyHandler);
     machine->SetHandler(BUS_ERROR_EXCEPTION,     &DefaultHandler);
     machine->SetHandler(ADDRESS_ERROR_EXCEPTION, &DefaultHandler);
     machine->SetHandler(OVERFLOW_EXCEPTION,      &DefaultHandler);

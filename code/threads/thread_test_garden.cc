@@ -50,7 +50,7 @@ ThreadTestGarden()
     // Launch a new thread for each turnstile.
     for (unsigned i = 0; i < NUM_TURNSTILES; i++) {
         printf("Launching turnstile %u.\n", i);
-        char *name = new char [16];
+        char name[16];
         sprintf(name, "Turnstile %u", i);
         unsigned *n = new unsigned;
         *n = i;

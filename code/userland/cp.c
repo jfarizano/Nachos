@@ -8,7 +8,7 @@ int
 main(int argc, char *argv[])
 {
   if (argc < 3) {
-      puts(ARGC_ERROR);
+      puts2(ARGC_ERROR);
       Exit(1);
   }
     
@@ -19,7 +19,7 @@ main(int argc, char *argv[])
   OpenFileId outputFile = Open(argv[2]);
 
   if (inputFile < 0 || outputFile < 0) {
-    puts(OPEN_ERROR);
+    puts2(OPEN_ERROR);
     return -1;
   } else {
     char buffer[1];
