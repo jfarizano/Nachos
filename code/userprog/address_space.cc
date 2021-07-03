@@ -9,15 +9,22 @@
 #include "address_space.hh"
 #include "executable.hh"
 #include "threads/system.hh"
+
+#ifndef USE_SWAP
 #include "lib/bitmap.hh"
+#else
+#include "vmem/coremap.hh"
+#include "filesys/directory_entry.hh"
+#endif
 
 #include <string.h>
+#include <cstdio>
 
 
 /// First, set up the translation from program memory to physical memory.
 /// For now, this is really simple (1:1), since we are only uniprogramming,
 /// and we have a single unsegmented page table.
-AddressSpace::AddressSpace(OpenFile *executable_file)
+AddressSpace::AddressSpace(OpenFile *executable_file, int pid)
 {
     ASSERT(executable_file != nullptr);
 
@@ -33,7 +40,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
 
     // How big is address space?
     unsigned size = exe.GetSize() + USER_STACK_SIZE;
-      // We need to increase the size to leave room for the stack.
+    // We need to increase the size to leave room for the stack.
     numPages = DivRoundUp(size, PAGE_SIZE);
     size = numPages * PAGE_SIZE;
 
@@ -43,6 +50,14 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
 
     DEBUG('a', "Initializing address space, num pages %u, size %u\n",
           numPages, size);
+
+    #ifdef USE_SWAP
+    nameSwap = new char[FILE_NAME_MAX_LEN];
+    snprintf(nameSwap, FILE_NAME_MAX_LEN, "SWAP.%u", pid);
+    ASSERT(fileSystem->Create(nameSwap, size));
+    ASSERT(swap = fileSystem->Open(nameSwap));
+    #endif
+
 
     #ifndef DEMAND_LOADING
     char *mainMemory = machine->GetMMU()->mainMemory;
@@ -55,7 +70,11 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
         pageTable[i].dirty        = false;
         pageTable[i].readOnly     = false;
         #ifndef DEMAND_LOADING
+        #ifndef USE_SWAP
         int frame = usedPages->Find();
+        #else
+        int frame = usedPages->Find(this, i);
+        #endif
         pageTable[i].virtualPage  = i;
         pageTable[i].physicalPage = frame;
         pageTable[i].valid        = true;
@@ -113,6 +132,11 @@ AddressSpace::~AddressSpace()
 
     delete exec;
     delete [] pageTable;
+
+    #ifdef USE_SWAP
+    fileSystem->Remove(nameSwap);
+    delete [] nameSwap;
+    #endif
 }
 
 /// Set the initial values for the user-level register set.
@@ -187,14 +211,18 @@ AddressSpace::LoadPage(unsigned vpn)
   unsigned virtualAddr = vpn * PAGE_SIZE;
   unsigned bytesRead = 0;
 
+  #ifndef USE_SWAP
   int frame = usedPages->Find();
+  #else
+  int frame = usedPages->Find(this, vpn);
+  #endif
   pageTable[vpn].physicalPage = frame;
   pageTable[vpn].virtualPage  = vpn;
   pageTable[vpn].valid        = true;
 
   char *mainMemory = machine->GetMMU()->mainMemory;
-  memset(mainMemory + frame * PAGE_SIZE, 0, PAGE_SIZE);
   uint32_t physicalAddr = frame * PAGE_SIZE;
+  memset(mainMemory + physicalAddr, 0, PAGE_SIZE);
 
   // We are in code segment
   if (virtualAddr < codeSize) {

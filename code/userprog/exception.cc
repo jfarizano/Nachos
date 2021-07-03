@@ -150,7 +150,7 @@ SyscallHandler(ExceptionType _et)
             }
 
             Thread *t = new Thread(filename, (bool) joinable, currentThread->GetPriority());
-            AddressSpace *space = new AddressSpace(executable);
+            AddressSpace *space = new AddressSpace(executable, t->pid);
             t->space = space;
 
             char **args = nullptr;

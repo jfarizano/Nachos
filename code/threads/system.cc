@@ -46,7 +46,11 @@ SynchDisk *synchDisk;
 #ifdef USER_PROGRAM  // Requires either *FILESYS* or *FILESYS_STUB*.
 Machine *machine;  ///< User program memory and registers.
 SynchConsole *synchConsole;
+#ifndef USE_SWAP
 Bitmap *usedPages;
+#else
+Coremap *usedPages;
+#endif
 Table<Thread *> *runningThreads;
 #endif
 
@@ -238,7 +242,11 @@ Initialize(int argc, char **argv)
     Debugger *d = debugUserProg ? new Debugger : nullptr;
     machine = new Machine(d);  // This must come first.
     synchConsole = new SynchConsole("Main synch console");
+    #ifndef USE_SWAP
     usedPages = new Bitmap(NUM_PHYS_PAGES);
+    #else
+    usedPages = new Coremap(NUM_PHYS_PAGES);
+    #endif
     SetExceptionHandlers();
 #endif
 
