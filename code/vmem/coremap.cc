@@ -44,6 +44,11 @@ Coremap::Find(AddressSpace *space, unsigned vpn)
     addrSpaces[which] = space;
     vpns[which] = vpn;
   }
+  #ifdef USE_SWAP
+  else {
+
+  }
+  #endif
   
   return which;
 }
@@ -53,3 +58,20 @@ Coremap::CountClear() const
 {
   return framesMap->CountClear();
 }
+
+#ifdef USE_SWAP
+int PickVictim() {
+
+  #ifdef PRPOLICY_FIFO
+    static int victim = 0;
+    victim++;
+    victim %= NUM_PHYS_PAGES;
+    return victim
+
+  // If no policy is selected we use a random number as policy
+  #else 
+    return random() % NUM_PHYS_PAGES;
+  #endif
+
+}
+#endif

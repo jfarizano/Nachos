@@ -398,6 +398,7 @@ PageFaultHandler(ExceptionType _et)
 
     #ifdef DEMAND_LOADING
     if (!entry.valid || entry.virtualPage == currentThread->space->numPages + 1) {
+        DEBUG('e', "Page not found in memory\n");
         entry.physicalPage = currentThread->space->LoadPage(vpn);
         entry.virtualPage = vpn;
         entry.valid = true;

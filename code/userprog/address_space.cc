@@ -83,7 +83,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file, int pid)
         memset(mainMemory + frame * PAGE_SIZE, 0, PAGE_SIZE);
         #else
         pageTable[i].virtualPage  = numPages + 1;
-        pageTable[i].physicalPage = 0;
+        pageTable[i].physicalPage = -1;
         pageTable[i].valid        = false;
         #endif
     }
@@ -127,7 +127,9 @@ AddressSpace::AddressSpace(OpenFile *executable_file, int pid)
 AddressSpace::~AddressSpace()
 {
     for (unsigned i = 0; i < numPages; i++) {
+      if (pageTable[i].physicalPage != -1 && pageTable[i] != numPages + 1) {
         usedPages->Clear(pageTable[i].physicalPage);
+      }
     }
 
     delete exec;

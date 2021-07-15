@@ -25,7 +25,7 @@ const unsigned MEMORY_SIZE = NUM_PHYS_PAGES * PAGE_SIZE;
 /// Number of entries in the TLB, if one is present.
 ///
 /// If there is a TLB, it will be small compared to page tables.
-const unsigned TLB_SIZE = 4;
+const unsigned TLB_SIZE = 8;
 
 
 /// This class simulates an MMU (memory management unit) that can use either
