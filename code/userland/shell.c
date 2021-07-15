@@ -125,7 +125,7 @@ main(void)
         // const SpaceId newProc = Exec(line);
         
          
-        const SpaceId newProc = Exec(join ? line : line + 1, argv, 1);
+        const SpaceId newProc = Exec(join ? line : line + 1, argv, join);
 
         // TODO: check for errors when calling `Exec`; this depends on how
         //       errors are reported.
