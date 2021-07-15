@@ -1,0 +1,39 @@
+La memoria del sistema cuenta con 128 páginas físicas.
+
+-----------------------------------
+4 entradas de TLB
+-----------------------------------
+matmult: hits 747064, faults 62630, ratio = 0.9226
+sort: hits 22612058, faults 1321548, ratio = 0.9447
+
+-----------------------------------
+8 entradas de TLB
+-----------------------------------
+matmult: hits 719796, faults 15695, ratio = 0.9786
+sort: hits 22087875, faults 16324, ratio = 0.9992
+
+
+-----------------------------------
+16 entradas de TLB
+-----------------------------------
+matmult: hits 716073, faults 8225, ratio = 0.9886
+sort: hits 22085655, faults 10372, ratio = 0.9995
+
+
+-----------------------------------
+32 entradas de TLB
+-----------------------------------
+matmult: hits 709410, faults 107, ratio = 0.9998
+sort: hits 22080030, faults 2930, ratio = 0.9998
+
+
+-----------------------------------
+64 entradas de TLB
+-----------------------------------
+matmult: hits 709359, faults 46, ratio = 0.9999
+sort: 22077483, faults 39, ratio = 0.9999
+
+A partir de 16 entradas en la TLB, a medida que vamos aumentando notamos que
+con los programas que probamos la ganancia que se obtiene es cada vez menor, por
+lo que a partir de este tamaño no conviene seguir aumentando a costo de espacio
+en memoria.

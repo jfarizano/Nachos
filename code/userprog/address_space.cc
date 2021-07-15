@@ -227,20 +227,22 @@ AddressSpace::LoadPage(unsigned vpn)
   memset(mainMemory + physicalAddr, 0, PAGE_SIZE);
 
   // We are in code segment
-  if (virtualAddr < codeSize) {
+  if (codeSize > 0 && virtualAddr < codeSize) {
     unsigned codeBlockSize = codeSize - virtualAddr;
+    codeBlockSize = codeBlockSize < PAGE_SIZE ? codeBlockSize : PAGE_SIZE; 
     exe.ReadCodeBlock(&mainMemory[physicalAddr], codeBlockSize, virtualAddr);
     bytesRead += codeBlockSize;
   }
 
   // We are in init data segment
-  if (virtualAddr + bytesRead < initDataAddr + initDataSize) {
-    unsigned initDataBlockSize = (initDataAddr + initDataSize) - (virtualAddr + bytesRead);
+  if (bytesRead < PAGE_SIZE && initDataSize > 0 && virtualAddr + bytesRead < initDataAddr + initDataSize) {
     unsigned offset = bytesRead > 0 ? 0 : virtualAddr - codeSize;
+    unsigned initDataBlockSize = initDataSize - offset < PAGE_SIZE - bytesRead ? initDataSize - offset : PAGE_SIZE - bytesRead;
     exe.ReadDataBlock(&mainMemory[physicalAddr + bytesRead], initDataBlockSize, offset);
     bytesRead += initDataBlockSize;
   }
 
+  ASSERT(bytesRead <= PAGE_SIZE);
   return frame;
 }
 #endif
