@@ -181,7 +181,7 @@ SyscallHandler(ExceptionType _et)
         case SC_CREATE: {
             int filenameAddr = machine->ReadRegister(4);
             if (filenameAddr == 0) {
-                DEBUG('e', "Error: address to filename string is null.\n");
+                DEBUG('e', "SC_CREATE->Error: address to filename string is null.\n");
                 machine->WriteRegister(2, -1);
                 break;
             }
@@ -212,7 +212,7 @@ SyscallHandler(ExceptionType _et)
             int filenameAddr = machine->ReadRegister(4);
 
             if (filenameAddr == 0) {
-                DEBUG('e', "Error: address to filename string is null.\n");
+                DEBUG('e', "SC_REMOVE->Error: address to filename string is null.\n");
                 machine->WriteRegister(2, -1);
                 break;
             }
@@ -243,7 +243,7 @@ SyscallHandler(ExceptionType _et)
             int filenameAddr = machine->ReadRegister(4);
 
             if (filenameAddr == 0) {
-                DEBUG('e', "Error: address to filename string is null.\n");
+                DEBUG('e', "SC_OPEN->Error: address to filename string is null.\n");
                 machine->WriteRegister(2, -1);
                 break;
             }
@@ -385,32 +385,38 @@ SyscallHandler(ExceptionType _et)
     IncrementPC();
 }
 
+#ifdef VMEM
 static void
 PageFaultHandler(ExceptionType _et)
 {
     int badVAddr = machine->ReadRegister(BAD_VADDR_REG);
     unsigned vpn = badVAddr / PAGE_SIZE;
-    static int circularIndex = 0;
+    
     DEBUG('e', "Page fault in thread %s, virtual page %u, badVAddr %u\n",
          currentThread->GetName(), vpn, badVAddr);
 
-    TranslationEntry entry = currentThread->space->GetTranslationEntry(vpn);
+    TranslationEntry *entry = currentThread->space->GetTranslationEntry(vpn);
 
-    #ifdef DEMAND_LOADING
-    if (!entry.valid || entry.virtualPage == currentThread->space->numPages + 1) {
+    if (!entry->valid) {
         DEBUG('e', "Page not found in memory\n");
-        entry.physicalPage = currentThread->space->LoadPage(vpn);
-        entry.virtualPage = vpn;
-        entry.valid = true;
+        currentThread->space->LoadPage(vpn);
     }
-    #endif
+    
+    static int circularIndex = 0;
 
-    machine->GetMMU()->tlb[circularIndex] = entry;
+    TranslationEntry *tlb = machine->GetMMU()->tlb;
+    tlb[circularIndex].virtualPage = vpn;
+    tlb[circularIndex].physicalPage = entry->physicalPage;
+    tlb[circularIndex].valid = entry->valid;
+    tlb[circularIndex].readOnly = entry->readOnly;
+    tlb[circularIndex].use = entry->use;
+    tlb[circularIndex].dirty = entry->dirty;
 
     circularIndex++;
     circularIndex %= TLB_SIZE;
     stats->numPageFaults++;
 }
+#endif
 
 static void
 ReadOnlyHandler(ExceptionType _et)
@@ -427,7 +433,11 @@ SetExceptionHandlers()
 {
     machine->SetHandler(NO_EXCEPTION,            &DefaultHandler);
     machine->SetHandler(SYSCALL_EXCEPTION,       &SyscallHandler);
+    #ifdef VMEM
     machine->SetHandler(PAGE_FAULT_EXCEPTION,    &PageFaultHandler);
+    #else
+    machine->SetHandler(PAGE_FAULT_EXCEPTION,    &DefaultHandler);
+    #endif
     machine->SetHandler(READ_ONLY_EXCEPTION,     &ReadOnlyHandler);
     machine->SetHandler(BUS_ERROR_EXCEPTION,     &DefaultHandler);
     machine->SetHandler(ADDRESS_ERROR_EXCEPTION, &DefaultHandler);

@@ -16,6 +16,7 @@
 
 #include "filesys/file_system.hh"
 #include "machine/translation_entry.hh"
+#include "lib/bitmap.hh"
 
 
 const unsigned USER_STACK_SIZE = 1024;  ///< Increase this as necessary!
@@ -47,14 +48,16 @@ public:
     void SaveState();
     void RestoreState();
 
-    TranslationEntry GetTranslationEntry(unsigned vpn);
+    TranslationEntry *GetTranslationEntry(unsigned vpn);
 
-    #ifdef DEMAND_LOADING
-    int LoadPage(unsigned vpn);
-    #endif
+    void LoadPage(unsigned vpn);
 
     /// Number of pages in the virtual address space.
     unsigned numPages;
+    Bitmap *inSwap;
+    #ifdef USE_SWAP
+    OpenFile *swap;
+    #endif
 
 private:
 
@@ -68,8 +71,9 @@ private:
     OpenFile *exec;
 
     #ifdef USE_SWAP
-    OpenFile *swap;
     char *nameSwap;
+    void HandleVictim(unsigned frame);
+    unsigned PickVictim();
     #endif
 
 };

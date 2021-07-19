@@ -40,6 +40,9 @@ clean:
 	@$(MAKE) -C network clean
 	@$(MAKE) -C bin clean
 	@$(MAKE) -C userland clean
+	find . -name *.depends -delete
+	find . -name SWAP.* -delete
+	rm -f userland/test.txt
 
 test:
 	@./tests/check.sh

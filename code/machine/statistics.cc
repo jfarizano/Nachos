@@ -21,6 +21,7 @@ Statistics::Statistics()
     numDiskReads = numDiskWrites = 0;
     numConsoleCharsRead = numConsoleCharsWritten = 0;
     numPageFaults = numPageHits = numPacketsSent = numPacketsRecvd = 0;
+    numPagesDemandLoaded = numSentSwap = numBroughtSwap = 0;
 #ifdef DFS_TICKS_FIX
     tickResets = 0;
 #endif
@@ -44,6 +45,8 @@ Statistics::Print()
     printf("Console I/O: reads %lu, writes %lu\n",
            numConsoleCharsRead, numConsoleCharsWritten);
     printf("Paging: hits %lu, faults %lu\n", numPageHits, numPageFaults);
+    printf("Demand loading: pages loaded %lu\n", numPagesDemandLoaded);
+    printf("Swap: pages sent %lu, pages brought %lu\n", numSentSwap, numBroughtSwap);
     printf("Network I/O: packets received %lu, sent %lu\n",
            numPacketsRecvd, numPacketsSent);
 }

@@ -33,6 +33,10 @@ public:
     unsigned CountClear() const;
 
     unsigned size;
+
+    AddressSpace *GetAddrSpace(unsigned frame);
+
+    int GetVpn(unsigned frame);
     
 private:
 

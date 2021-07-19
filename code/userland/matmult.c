@@ -40,5 +40,6 @@ main(void)
     }
 
     // And then we are done.
+    Exit(C[DIM - 1][DIM - 1]);
     return C[DIM - 1][DIM - 1];
 }

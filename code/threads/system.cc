@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 
 /// This defines *all* of the global data structures used by Nachos.
@@ -267,6 +268,8 @@ Initialize(int argc, char **argv)
 void
 Cleanup()
 {
+    printf("\n\n");
+    stats->Print();
     DEBUG('i', "Cleaning up...\n");
 
     // 2007, Jose Miguel Santos Espino

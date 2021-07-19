@@ -49,6 +49,15 @@ public:
 
     unsigned long numPageHits;
 
+    /// Number of pages demand loaded.
+    unsigned long numPagesDemandLoaded;
+
+    /// Number of pages sent to swap.
+    unsigned long numSentSwap;
+
+    /// Number of pages brought from swap.
+    unsigned long numBroughtSwap;
+
     /// Number of packets sent over the network.
     unsigned long numPacketsSent;
 
