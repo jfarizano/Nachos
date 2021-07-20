@@ -14,8 +14,8 @@
 # limitation of liability and disclaimer of warranty provisions.
 
 DEFINES      = -DUSER_PROGRAM  -DFILESYS_NEEDED -DFILESYS_STUB -DVMEM \
-               -DUSE_TLB -DDFS_TICKS_FIX -DFIXHALTWITHTIMER\
-               -DDEMAND_LOADING -DUSE_SWAP
+               -DUSE_TLB -DDFS_TICKS_FIX \
+               -DDEMAND_LOADING -DUSE_SWAP -DPRPOLICY_CLOCK
 
 INCLUDE_DIRS = -I.. -I../filesys -I../bin -I../userprog -I../threads \
                -I../machine

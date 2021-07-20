@@ -254,7 +254,7 @@ AddressSpace::LoadPage(unsigned vpn)
     Executable exe (exec);
     ASSERT(exe.CheckMagic());
 
-    DEBUG('e', "Página demand loadeada\n");
+    DEBUG('e', "Page demand loaded\n");
     unsigned bytesRead = 0;
     // We are in code segment
     if (codeSize > 0 && virtualAddr < codeSize) {
@@ -262,7 +262,7 @@ AddressSpace::LoadPage(unsigned vpn)
       codeBlockSize = codeBlockSize < PAGE_SIZE ? codeBlockSize : PAGE_SIZE; 
       exe.ReadCodeBlock(&mainMemory[physicalAddr], codeBlockSize, virtualAddr);
       bytesRead += codeBlockSize;
-      DEBUG('e', "Codigo cargado\n");
+      DEBUG('e', "Code loaded\n");
     }
     
     // We are in init data segment
@@ -271,7 +271,7 @@ AddressSpace::LoadPage(unsigned vpn)
       unsigned initDataBlockSize = initDataSize - offset < PAGE_SIZE - bytesRead ? initDataSize - offset : PAGE_SIZE - bytesRead;
       exe.ReadDataBlock(&mainMemory[physicalAddr + bytesRead], initDataBlockSize, offset);
       bytesRead += initDataBlockSize;
-      DEBUG('e', "Data cargada\n");
+      DEBUG('e', "Data loaded\n");
     }
     
     stats->numPagesDemandLoaded++;
@@ -282,7 +282,7 @@ AddressSpace::LoadPage(unsigned vpn)
   #ifdef USE_SWAP
   // The page is in swap
   if (inSwap->Test(vpn)) {
-    DEBUG('e', "Página traída de swap\n");
+    DEBUG('e', "Página brought to swap\n");
     ASSERT(swap->ReadAt(&mainMemory[physicalAddr], PAGE_SIZE, virtualAddr) == PAGE_SIZE);
     stats->numBroughtSwap++;
   }
@@ -305,46 +305,117 @@ AddressSpace::HandleVictim(unsigned frame)
   ASSERT(vpn != -1);
   ASSERT(space != nullptr);
 
-  DEBUG('e', "Liberando frame %u, ocupada por vpn %u\n", frame, vpn);  
+  DEBUG('e', "Freeing frame %u, occupied por vpn %u\n", frame, vpn);  
 
   for (unsigned i = 0; i < TLB_SIZE; i++) {
     if (tlb[i].physicalPage == frame && tlb[i].valid) {
       entry->dirty = tlb[i].dirty;
       entry->use = tlb[i].use;
       tlb[i].valid = false;
+      break;
     }
   }
 
   if (entry->dirty) {
-    DEBUG('e', "Enviando página a swap\n");
+    DEBUG('e', "Sending page to swap\n");
     char *mainMemory = machine->GetMMU()->mainMemory;
     unsigned virtualAddr = vpn * PAGE_SIZE;
     uint32_t physicalAddr = frame * PAGE_SIZE;
     ASSERT(space->swap->WriteAt(&mainMemory[physicalAddr], PAGE_SIZE, virtualAddr) == PAGE_SIZE);
     space->inSwap->Mark(vpn);
     stats->numSentSwap++;
-    DEBUG('e', "Página enviada a swap\n");
+    DEBUG('e', "Page sent to swap\n");
   }
 
   entry->dirty = false;
   entry->valid = false;
 
-  DEBUG('e', "Frame %u liberado\n", frame); 
+  DEBUG('e', "Frame %u freed\n", frame); 
 }
 
+// Second Chance Improved algorithm for picking a victim
+unsigned
+ClockPolicy() 
+{
+  static unsigned victim = 0;
+  unsigned temp;
+  int vpn;
+  AddressSpace* space;
+  TranslationEntry *entry;
+  TranslationEntry *tlb = machine->GetMMU()->tlb;
+  
+  // The algorithm makes at most 4 rounds
+  for (unsigned round = 1; round <= 4; round++) {
+    for (unsigned i = 0; i < NUM_PHYS_PAGES; i++) {
+      // First, we look for the page associated to the frame in the TLB because
+      // the information is more up to date there.
+      for (unsigned j = 0; j < TLB_SIZE; j++) {
+        if (tlb[j].valid && tlb[j].physicalPage == victim) {
+          entry = &tlb[j];
+          break;
+        }
+      }
+      // If it's not in the TLB, we look for it in some address space
+      if (entry == nullptr) {
+        space = usedPages->GetAddrSpace(victim);
+        if (space != nullptr) {
+          vpn = usedPages->GetVpn(victim);
+          entry = space->GetTranslationEntry(vpn);
+        }
+      }
+      // We found it! :D
+      if (entry != nullptr) {
+        if (round == 1 || round == 3) {
+          // We look for (0, 0)
+          if(!entry->use && !entry->dirty) {
+            temp = victim;
+            victim++;
+            victim %= NUM_PHYS_PAGES;
+            return temp;
+          }
+        } else if (round == 2 || round == 4) {
+          // We look for (0, 1)
+          if(!entry->use && entry->dirty) {
+            temp = victim;
+            victim++;
+            victim %= NUM_PHYS_PAGES;
+            return temp;
+          } else {
+            // If we are in the second round we have to set the use bit to false
+            if (round == 2) {
+              entry->use = false;
+            }
+          }
+        }
+      // It's free real estate
+      } else {
+        temp = victim;
+        victim++;
+        victim %= NUM_PHYS_PAGES;
+        return temp;
+      }
+      victim++;
+      victim %= NUM_PHYS_PAGES;
+    }
+  }
+
+  // The function will always return in one of the rounds above, this is just
+  // for the compiler
+  return victim;
+}
 
 unsigned
 AddressSpace::PickVictim()
 {
-
   #ifdef PRPOLICY_FIFO
     static int victim = -1;
     victim++;
     victim %= NUM_PHYS_PAGES;
     return victim;
-
-  // If no policy is selected we use a random number as policy
+  #elif PRPOLICY_CLOCK
+    return ClockPolicy();
   #else 
+    // If no policy is selected we use a random number as policy
     return random() % NUM_PHYS_PAGES;
   #endif
 
