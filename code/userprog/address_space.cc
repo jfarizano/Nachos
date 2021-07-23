@@ -50,7 +50,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file, int pid)
     nameSwap = new char[FILE_NAME_MAX_LEN];
     DEBUG('a', "Creating swap file\n");
     snprintf(nameSwap, FILE_NAME_MAX_LEN, "SWAP.%u", pid);
-    ASSERT(fileSystem->Create(nameSwap, 4 * size));
+    ASSERT(fileSystem->Create(nameSwap, size));
     ASSERT(swap = fileSystem->Open(nameSwap));
     DEBUG('a', "Swap file created\n");
     #endif
@@ -182,19 +182,14 @@ void
 AddressSpace::SaveState()
 {
   #ifdef USE_SWAP
-  int vpn;
-  AddressSpace* space;
-  TranslationEntry *entry;
+  unsigned vpn;
   TranslationEntry *tlb = machine->GetMMU()->tlb;
 
   for (unsigned i = 0; i < TLB_SIZE; i++) {
     if (tlb[i].valid) {
-      vpn = usedPages->GetVpn(tlb[i].physicalPage);
-      space = usedPages->GetAddrSpace(tlb[i].physicalPage);
-      entry = space->GetTranslationEntry(vpn);
-
-      entry->use = tlb[i].use;
-      entry->dirty = tlb[i].dirty;
+      vpn = tlb[i].virtualPage;
+      pageTable[vpn].use = tlb[i].use;
+      pageTable[vpn].dirty = tlb[i].dirty;
     }
   }
   #endif

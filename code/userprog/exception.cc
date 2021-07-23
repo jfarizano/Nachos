@@ -403,8 +403,16 @@ PageFaultHandler(ExceptionType _et)
     }
     
     static int circularIndex = 0;
-
     TranslationEntry *tlb = machine->GetMMU()->tlb;
+
+    if (tlb[circularIndex].valid) {
+        unsigned victimVpn = tlb[circularIndex].virtualPage;
+        TranslationEntry *victimEntry = currentThread->space->GetTranslationEntry(victimVpn);
+
+        victimEntry->use = tlb[circularIndex].use;
+        victimEntry->dirty = tlb[circularIndex].dirty;
+    }
+
     tlb[circularIndex].virtualPage = vpn;
     tlb[circularIndex].physicalPage = entry->physicalPage;
     tlb[circularIndex].valid = entry->valid;
