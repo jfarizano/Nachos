@@ -268,8 +268,7 @@ Initialize(int argc, char **argv)
 void
 Cleanup()
 {
-    printf("\n\n");
-    stats->Print();
+    printf("\n");
     DEBUG('i', "Cleaning up...\n");
 
     // 2007, Jose Miguel Santos Espino
@@ -303,6 +302,9 @@ Cleanup()
 #ifdef FILESYS
     delete synchDisk;
 #endif
+
+    printf("\n");
+    stats->Print();
 
     delete timer;
     delete scheduler;

@@ -10,7 +10,8 @@
 # All rights reserved.  See `copyright.h` for copyright notice and
 # limitation of liability and disclaimer of warranty provisions.
 
-DEFINES      = -DUSER_PROGRAM -DVMEM -DFILESYS_NEEDED -DFILESYS
+DEFINES      = -DUSER_PROGRAM -DVMEM -DFILESYS_NEEDED -DFILESYS \
+							 -DFIXHALTWITHTIMER
 INCLUDE_DIRS = -I.. -I../bin -I../vm -I../userprog -I../threads -I../machine
 HDR_FILES    = $(THREAD_HDR) $(USERPROG_HDR) $(VMEM_HDR) $(FILESYS_HDR)
 SRC_FILES    = $(THREAD_SRC) $(USERPROG_SRC) $(VMEM_SRC) $(FILESYS_SRC)

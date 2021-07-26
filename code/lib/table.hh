@@ -46,6 +46,8 @@ public:
     /// Returns the old item.
     T Update(int i, T item);
 
+    unsigned FetchCount();
+
 private:
     /// Data items.
     T data[SIZE];
@@ -58,6 +60,8 @@ private:
     /// `current`.  In other words, this keeps track of external
     /// fragmentation.
     List<int> freed;
+
+    unsigned count;
 };
 
 
@@ -65,6 +69,7 @@ template <class T>
 Table<T>::Table()
 {
     current = 0;
+    count = 0;
 }
 
 
@@ -77,10 +82,12 @@ Table<T>::Add(T item)
     if (!freed.IsEmpty()) {
         i = freed.Pop();
         data[i] = item;
+        count++;
         return i;
     } else if (current < static_cast<int>(SIZE)) {
         i = current++;
         data[i] = item;
+        count++;
         return i;
     } else {
         return -1;
@@ -132,6 +139,7 @@ Table<T>::Remove(int i)
     } else {
         freed.SortedInsert(i, i);
     }
+    count--;
     return data[i];
 }
 
@@ -148,5 +156,11 @@ Table<T>::Update(int i, T item)
     return previous;
 }
 
+template <class T>
+unsigned
+Table<T>::FetchCount()
+{
+    return count;
+}
 
 #endif

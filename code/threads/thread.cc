@@ -205,12 +205,9 @@ Thread::Finish(int code)
         // como hay siempre interrupts, nunca se ejecuta el halt automático
         // al no haber threads.
         #ifdef FIXHALTWITHTIMER
-                runningThreads->Remove(pid);
-                if (runningThreads->IsEmpty()) {
-                    pid = runningThreads->Add(this);
-                    interrupt->Halt();
-                }
-                pid = runningThreads->Add(this);
+            if (runningThreads->FetchCount() == 1) {
+                interrupt->Halt();
+            }
         #endif
     #endif
 
