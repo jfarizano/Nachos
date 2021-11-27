@@ -38,7 +38,6 @@
 
 #include "open_file.hh"
 
-
 #ifdef FILESYS_STUB  // Temporarily implement file system calls as calls to
                      // UNIX, until the real file system implementation is
                      // available.
@@ -94,7 +93,7 @@ public:
 
 #include "directory_entry.hh"
 #include "machine/disk.hh"
-
+#include "lib/list.hh"
 
 /// Initial file sizes for the bitmap and directory; until the file system
 /// supports extensible files, the directory size sets the maximum number of
@@ -127,7 +126,7 @@ public:
     bool Remove(const char *name);
 
     /// List all the files in the file system.
-    void List();
+    void ListFiles();
 
     /// Check the filesystem.
     bool Check();
