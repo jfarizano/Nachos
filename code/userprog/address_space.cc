@@ -337,20 +337,24 @@ ClockPolicy()
   int vpn;
   AddressSpace* space;
   TranslationEntry *entry;
-  TranslationEntry *tlb = machine->GetMMU()->tlb;
+  // TranslationEntry *tlb = machine->GetMMU()->tlb;
+
+  currentThread->space->SaveState();
   
   // The algorithm makes at most 4 rounds
   for (unsigned round = 1; round <= 4; round++) {
     for (unsigned i = 0; i < NUM_PHYS_PAGES; i++) {
       entry = nullptr;
+
       // First, we look for the page associated to the frame in the TLB because
       // the information is more up to date there.
-      for (unsigned j = 0; j < TLB_SIZE; j++) {
-        if (tlb[j].valid && tlb[j].physicalPage == victim) {
-          entry = &tlb[j];
-          break;
-        }
-      }
+      // for (unsigned j = 0; j < TLB_SIZE; j++) {
+      //   if (tlb[j].valid && tlb[j].physicalPage == victim) {
+      //     entry = &tlb[j];
+      //     break;
+      //   }
+      // }
+
       // If it's not in the TLB, we look for it in some address space
       if (entry == nullptr) {
         space = usedPages->GetAddrSpace(victim);
