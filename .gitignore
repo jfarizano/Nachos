@@ -1,7 +1,11 @@
+# para users de vs code
+vscode/
+# ejecutables, archivos swap, cosas de makefile
 code/**/*.o
 code/**/SWAP.*
 code/**/*.depends
 code/**/*.coff
+# ejecutables de utilidad
 code/bin/coff2flat
 code/bin/coff2noff
 code/bin/disassemble
@@ -15,7 +19,9 @@ code/userland/*
 !code/userland/*.s
 !code/userland/Makefile
 !code/userland/arrangement.ld
-# Archivos basura mas el pdf al compilar latex
+# para no pushear el archivo que simula al disco duro
+code/**/DISK
+# Archivos basura al compilar latex
 documentation/**/*.pdf
 documentation/**/*.bin
 documentation/**/*.aux
