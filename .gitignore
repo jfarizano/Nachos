@@ -1,0 +1,32 @@
+code/**/*.o
+code/**/SWAP.*
+code/**/*.depends
+code/**/*.coff
+code/bin/coff2flat
+code/bin/coff2noff
+code/bin/disassemble
+code/bin/readnoff
+# con esto se deberian ignorar todos los ejecutables de Nachos compilados
+code/**/nachos
+# Quiero ignorar los programas de usuario (que no tienen extension)
+# pero no su codigo fuente y archivos utiles
+code/userland/*
+!code/userland/*.c
+!code/userland/*.s
+!code/userland/Makefile
+!code/userland/arrangement.ld
+# Archivos basura mas el pdf al compilar latex
+documentation/**/*.pdf
+documentation/**/*.bin
+documentation/**/*.aux
+documentation/**/*.synctex
+documentation/**/*.fdb_latexmk
+documentation/**/*.synctex.gz
+documentation/**/*.fls
+documentation/**/*.log
+documentation/**/*.blg
+documentation/**/*.bbl
+documentation/**/*.out
+documentation/**/*.dvi
+documentation/**/*.xdv
+documentation/**/*-converted-to.*
