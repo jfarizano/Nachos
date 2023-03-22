@@ -22,17 +22,20 @@
 /// memory while the file is open.
 ///
 /// * `sector` is the location on disk of the file header for this file.
-OpenFile::OpenFile(int sector)
+OpenFile::OpenFile(FileHeader *sharedHdr, SynchFile *sharedSynch, int fId)
 {
-    hdr = new FileHeader;
-    hdr->FetchFrom(sector);
+    // hdr = new FileHeader;
+    // hdr->FetchFrom(sector);
+    hdr = sharedHdr;
+    synch = sharedSynch;
+    globalId = fId;
     seekPosition = 0;
 }
 
 /// Close a Nachos file, de-allocating any in-memory data structures.
 OpenFile::~OpenFile()
 {
-    delete hdr;
+    
 }
 
 /// Change the current location within the open file -- the point at which
@@ -44,6 +47,8 @@ OpenFile::Seek(unsigned position)
 {
     seekPosition = position;
 }
+
+// TODO: Read y write
 
 /// OpenFile::Read/Write
 ///
@@ -195,4 +200,10 @@ unsigned
 OpenFile::Length() const
 {
     return hdr->FileLength();
+}
+
+int
+OpenFile::GetGlobalId()
+{
+    return globalId;
 }
