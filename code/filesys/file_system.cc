@@ -122,7 +122,7 @@ FileSystem::FileSystem(bool format)
         DEBUG('f', "Writing bitmap and directory back to disk.\n");
         freeMap->WriteBack(freeMapFile);     // flush changes to disk
         dir->WriteBack(directoryFile);
-
+        
         if (debug.IsEnabled('f')) {
             freeMap->Print();
             dir->Print();
@@ -140,6 +140,7 @@ FileSystem::FileSystem(bool format)
         directoryFile = new OpenFile(hdrDirectory, synchDirectory, 1);
     }
 
+    DEBUG('f', "Creating global open files table\n");
     openFiles = new OpenFilesTable;
     openFiles->AddFile(nullptr, hdrFreeMap, synchFreeMap);
     openFiles->AddFile(nullptr, hdrDirectory, synchDirectory);

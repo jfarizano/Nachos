@@ -282,7 +282,11 @@ SyscallHandler(ExceptionType _et)
             DEBUG('e', "`Close` requested for id %u.\n", fid);
 
             if (currentThread->filesTable->HasKey(fid)) {
-                delete currentThread->filesTable->Remove(fid);
+                OpenFile *file = currentThread->filesTable->Remove(fid);
+                #ifndef FILESYS_STUB
+                fileSystem->Close(file->GetGlobalId());
+                #endif
+                delete file;
                 DEBUG('e', "File id %u closed.\n", fid);
                 machine->WriteRegister(2, fid);
             } else {
