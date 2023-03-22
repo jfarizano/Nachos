@@ -69,6 +69,15 @@ static const unsigned DIRECTORY_SECTOR = 1;
 FileSystem::FileSystem(bool format)
 {
     DEBUG('f', "Initializing the file system.\n");
+
+    SynchFile *synchFreeMap = new SynchFile;
+    FileHeader *hdrFreeMap = new FileHeader;
+    hdrFreeMap->FetchFrom(FREE_MAP_SECTOR);
+
+    SynchFile *synchDirectory = new SynchFile;
+    FileHeader *hdrDirectory = new FileHeader;
+    hdrDirectory->FetchFrom(DIRECTORY_SECTOR);
+
     if (format) {
         Bitmap     *freeMap = new Bitmap(NUM_SECTORS);
         Directory  *dir     = new Directory(NUM_DIR_ENTRIES);
@@ -101,8 +110,8 @@ FileSystem::FileSystem(bool format)
         // The file system operations assume these two files are left open
         // while Nachos is running.
 
-        freeMapFile   = new OpenFile(FREE_MAP_SECTOR);
-        directoryFile = new OpenFile(DIRECTORY_SECTOR);
+        freeMapFile   = new OpenFile(hdrFreeMap, synchFreeMap, 0);
+        directoryFile = new OpenFile(hdrDirectory, synchDirectory, 1);
 
         // Once we have the files “open”, we can write the initial version of
         // each file back to disk.  The directory at this point is completely
@@ -127,15 +136,23 @@ FileSystem::FileSystem(bool format)
         // If we are not formatting the disk, just open the files
         // representing the bitmap and directory; these are left open while
         // Nachos is running.
-        freeMapFile   = new OpenFile(FREE_MAP_SECTOR);
-        directoryFile = new OpenFile(DIRECTORY_SECTOR);
+        freeMapFile   = new OpenFile(hdrFreeMap, synchFreeMap, 0);
+        directoryFile = new OpenFile(hdrDirectory, synchDirectory, 1);
     }
+
+    openFiles = new OpenFilesTable;
+    openFiles->AddFile(nullptr, hdrFreeMap, synchFreeMap);
+    openFiles->AddFile(nullptr, hdrDirectory, synchDirectory);
+    DEBUG('f', "Filesystem initialized\n");
 }
 
 FileSystem::~FileSystem()
 {
     delete freeMapFile;
     delete directoryFile;
+    this->Close(0);
+    this->Close(1);
+    delete openFiles;
 }
 
 /// Create a file in the Nachos file system (similar to UNIX `create`).
@@ -217,17 +234,66 @@ FileSystem::Open(const char *name)
 {
     ASSERT(name != nullptr);
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    int fId;
     OpenFile  *openFile = nullptr;
 
-    DEBUG('f', "Opening file %s\n", name);
-    dir->FetchFrom(directoryFile);
-    int sector = dir->Find(name);
-    if (sector >= 0) {
-        openFile = new OpenFile(sector);  // `name` was found in directory.
+    // File wasn't opened by another thread so it's added to the table
+    if ((fId = openFiles->Find(name)) == - 1) {
+        Directory *dir = new Directory(NUM_DIR_ENTRIES);
+        
+        DEBUG('f', "Opening file %s\n", name);
+        dir->FetchFrom(directoryFile);
+        int sector = dir->Find(name);
+
+        if (sector >= 0) {
+            FileHeader *hdr = new FileHeader;
+            hdr->FetchFrom(sector);
+
+            SynchFile *synch = new SynchFile;
+            fId = openFiles->AddFile(name, hdr, synch);
+            
+            if (fId != -1) {
+                openFile = new OpenFile(hdr, synch, fId);  // `name` was found in directory.
+            } else {
+                delete hdr;
+                delete synch;
+            }
+        }
+        delete dir;
+    } else { // File was opened by another thread
+        DEBUG('f', "File %s already opened\n", name);
+        FileInfo *fInfo = openFiles->Get(fId);
+
+        if(fInfo->available) {
+            DEBUG('f', "Opening file %s (again)\n", name);
+            fInfo->nThreads++;
+            openFile = new OpenFile(fInfo->hdr, fInfo->synch, fId);
+        } else {
+            DEBUG('f', "File %s removed by other thread, could not be opened\n", name);
+        }
     }
-    delete dir;
+
     return openFile;  // Return null if not found.
+}
+
+void
+FileSystem::Close(int fId) {
+    FileInfo *fInfo;
+
+    DEBUG('f', "Closing file with global id %d\n", fId);
+    ASSERT((fInfo = openFiles->Get(fId)) != nullptr);
+    fInfo->nThreads--;
+
+    if (fInfo->nThreads == 0) {
+        if (!fInfo->available) {
+            DEBUG('f', "File with global id %d marked to be deleted, deleting\n", fId);
+            ASSERT(this->Delete(fInfo->name));
+        }
+        delete fInfo->hdr;
+        delete fInfo->synch;
+        openFiles->RemoveFile(fId);
+        DEBUG('f', "File with global id %d removed from global files list\n", fId);
+    }    
 }
 
 /// Delete a file from the file system.
@@ -243,15 +309,14 @@ FileSystem::Open(const char *name)
 ///
 /// * `name` is the text name of the file to be removed.
 bool
-FileSystem::Remove(const char *name)
-{
-    ASSERT(name != nullptr);
-
+FileSystem::Delete(const char *name) {
+    DEBUG('f', "Deleting file %s\n", name);
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
     int sector = dir->Find(name);
     if (sector == -1) {
        delete dir;
+       DEBUG('f', "File %s\n not found, deletedn't", name);
        return false;  // file not found
     }
     FileHeader *fileH = new FileHeader;
@@ -269,7 +334,24 @@ FileSystem::Remove(const char *name)
     delete fileH;
     delete dir;
     delete freeMap;
+    DEBUG('f', "File %s\n deleted", name);
     return true;
+}
+
+bool
+FileSystem::Remove(const char *name)
+{
+    ASSERT(name != nullptr);
+
+    int fId;
+
+    if ((fId = openFiles->Find(name)) != - 1) {
+        FileInfo *fInfo = openFiles->Get(fId);
+        fInfo->available = false;
+        return true;
+    } else {
+        return this->Delete(name);
+    }    
 }
 
 /// List all the files in the file system directory.

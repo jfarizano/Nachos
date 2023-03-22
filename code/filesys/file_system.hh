@@ -94,7 +94,7 @@ public:
 
 #include "directory_entry.hh"
 #include "machine/disk.hh"
-
+#include "filesys/open_files_table.hh"
 
 /// Initial file sizes for the bitmap and directory; until the file system
 /// supports extensible files, the directory size sets the maximum number of
@@ -123,7 +123,10 @@ public:
     /// Open a file (UNIX `open`).
     OpenFile *Open(const char *name);
 
-    /// Delete a file (UNIX `unlink`).
+    /// Close a file when it's not used by any thread.
+    void Close(int fId);
+
+    /// Marks a file to be deleted if it's opened by another thread, otherwise it's deleted
     bool Remove(const char *name);
 
     /// List all the files in the file system.
@@ -140,6 +143,10 @@ private:
                             ///< file.
     OpenFile *directoryFile;  ///< “Root” directory -- list of file names,
                               ///< represented as a file.
+    OpenFilesTable *openFiles;
+
+    /// Delete a file (UNIX `unlink`).
+    bool Delete(const char *name);
 };
 
 #endif

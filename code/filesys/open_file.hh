@@ -22,7 +22,6 @@
 
 #include "lib/utility.hh"
 
-
 #ifdef FILESYS_STUB  // Temporarily implement calls to Nachos file system as
                      // calls to UNIX!  See definitions listed under `#else`.
 class OpenFile {
@@ -85,13 +84,15 @@ private:
 };
 
 #else // FILESYS
+
+#include "synch_file.hh"
 class FileHeader;
 
 class OpenFile {
 public:
 
     /// Open a file whose header is located at `sector` on the disk.
-    OpenFile(int sector);
+    OpenFile(FileHeader *sharedHdr, SynchFile *sharedSynch, int fId);
 
     /// Close the file.
     ~OpenFile();
@@ -114,9 +115,13 @@ public:
     // the UNIX idiom -- `lseek` to end of file, `tell`, `lseek` back).
     unsigned Length() const;
 
+    int GetGlobalId();
+    
   private:
     FileHeader *hdr;  ///< Header for this file.
     unsigned seekPosition;  ///< Current position within the file.
+    SynchFile *synch; // To synch threads
+    int globalId; // Id on the global files table
 };
 
 #endif
