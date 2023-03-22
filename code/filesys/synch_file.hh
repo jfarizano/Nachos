@@ -27,7 +27,6 @@ class SynchFile {
     Condition *cond;
     unsigned numWritersWaiting, numReadersActive;
     Thread *threadWriting;
-    bool writing;
 };
 
 #endif
