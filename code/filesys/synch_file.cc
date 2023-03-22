@@ -7,7 +7,7 @@ SynchFile::SynchFile()
   cond = new Condition("file cond", lock);
   numWritersWaiting = 0;
   numReadersActive = 0;
-  writing = false;
+  threadWriting = nullptr;
 }
 
 SynchFile::~SynchFile()
@@ -17,11 +17,14 @@ SynchFile::~SynchFile()
 }
 
 void
-SynchFile::BeginRead()
+SynchFile::BeginRead(Thread *threadAsking)
 {
   lock->Acquire();
-  while (numWritersWaiting > 0 || writing) {
-    cond->Wait();
+  
+  if (threadAsking != threadWriting) {
+    while (numWritersWaiting > 0 || threadWriting != nullptr) {
+      cond->Wait();
+    }
   }
   numReadersActive++;
   lock->Release();
@@ -39,15 +42,15 @@ SynchFile::EndRead()
 }
 
 void
-SynchFile::BeginWrite()
+SynchFile::BeginWrite(Thread *threadAsking)
 {
   lock->Acquire();
   numWritersWaiting++;
-  while (numReadersActive > 0 || writing) {
+  while (numReadersActive > 0 || threadWriting != nullptr) {
     cond->Wait();
   }
   numWritersWaiting--;
-  writing = true;
+  threadWriting = threadAsking;
   lock->Release();
 }
 
@@ -55,7 +58,7 @@ void
 SynchFile::EndWrite()
 {
   lock->Acquire();
-  writing = false;
   cond->Broadcast();
+  threadWriting = nullptr;
   lock->Release();
 }

@@ -115,6 +115,8 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
 
+    synch->BeginRead(currentThread);
+
     unsigned fileLength = hdr->FileLength();
     unsigned firstSector, lastSector, numSectors;
     char *buf;
@@ -142,6 +144,9 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     // Copy the part we want.
     memcpy(into, &buf[position - firstSector * SECTOR_SIZE], numBytes);
     delete [] buf;
+
+    synch->EndRead();
+
     return numBytes;
 }
 
@@ -150,6 +155,8 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
 {
     ASSERT(from != nullptr);
     ASSERT(numBytes > 0);
+
+    synch->BeginWrite(currentThread);
 
     unsigned fileLength = hdr->FileLength();
     unsigned firstSector, lastSector, numSectors;
@@ -192,6 +199,9 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
                                &buf[(i - firstSector) * SECTOR_SIZE]);
     }
     delete [] buf;
+
+    synch->EndWrite();
+
     return numBytes;
 }
 

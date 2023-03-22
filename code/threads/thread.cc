@@ -91,9 +91,12 @@ Thread::~Thread()
 #ifdef USER_PROGRAM
     for (unsigned i = 0; i < filesTable->SIZE; i++) {
         if (filesTable->HasKey(i)) {
-            OpenFile* id = filesTable->Remove(i);
-            if (id != nullptr) {
-                delete id;
+            OpenFile* file = filesTable->Remove(i);
+            if (file != nullptr) {
+                #ifndef FILESYS_STUB
+                fileSystem->Close(file->GetGlobalId());
+                #endif
+                delete file;
             }
         }
     }

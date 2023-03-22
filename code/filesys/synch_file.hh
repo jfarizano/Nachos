@@ -3,6 +3,7 @@
 
 class Condition;
 class Lock;
+class Thread;
 
 // Based on: https://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock
 
@@ -13,11 +14,11 @@ class SynchFile {
 
     ~SynchFile();
 
-    void BeginRead();
+    void BeginRead(Thread *threadAsking);
 
     void EndRead();
 
-    void BeginWrite();
+    void BeginWrite(Thread *threadAsking);
 
     void EndWrite();
 
@@ -25,6 +26,7 @@ class SynchFile {
     Lock *lock;
     Condition *cond;
     unsigned numWritersWaiting, numReadersActive;
+    Thread *threadWriting;
     bool writing;
 };
 
