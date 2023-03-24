@@ -279,15 +279,14 @@ Cleanup()
 #endif
 
 #ifdef USER_PROGRAM  
-    #ifdef FIXHALTWITHTIMER
-        currentThread = nullptr;
-        for (unsigned i = 0; i < runningThreads->SIZE; i++) {
-            Thread *t = runningThreads->Get(i);
-            if (t != nullptr) {
-                delete t;
-            }
+    currentThread = nullptr;
+    for (unsigned i = 0; i < runningThreads->SIZE; i++) {
+        Thread *t = runningThreads->Get(i);
+        if (t != nullptr) {
+            delete t;
         }
-    #endif
+    }
+    
 
     delete machine;
     delete synchConsole;
