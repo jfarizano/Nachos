@@ -61,10 +61,15 @@ public:
     ///
     /// NOTE: this should only be used by routines that operate on the file
     /// system at a low level.
-    const RawFileHeader *GetRaw() const;
+    const RawFileHeader *GetRaw() const;    
 
 private:
     RawFileHeader raw;
+    RawIndirectionTable indirectTables[NUM_INDIRECT];
+
+    unsigned GetNumDataSectors(unsigned fileSize);
+
+    unsigned GetNumIndirectTables(unsigned fileSize);
 };
 
 

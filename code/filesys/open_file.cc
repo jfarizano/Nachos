@@ -116,9 +116,9 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     ASSERT(numBytes > 0);
 
     if (synch != nullptr) {
-        DEBUG('f', "Waiting to synch read\n");
+        DEBUG('f', "Begin synch read of file with global id %u\n", globalId);
         synch->BeginRead(currentThread);
-        DEBUG('f', "Read synched\n");
+        DEBUG('f', "Read synched of file with global id %u\n", globalId);
     }
 
     unsigned fileLength = hdr->FileLength();
@@ -126,13 +126,18 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     char *buf;
 
     if (position >= fileLength) {
+        if (synch != nullptr) {
+            DEBUG('f', "Ending synch read of file with global id %u\n", globalId);
+            synch->EndRead();
+            DEBUG('f', "Ended synch read of file with global id %u\n", globalId);
+        }
         return 0;  // Check request.
     }
     if (position + numBytes > fileLength) {
         numBytes = fileLength - position;
     }
-    DEBUG('f', "Reading %u bytes at %u, from file of length %u.\n",
-          numBytes, position, fileLength);
+    DEBUG('f', "Reading %u bytes at %u, from file of global id %u of length %u.\n",
+          numBytes, position, globalId, fileLength);
 
     firstSector = DivRoundDown(position, SECTOR_SIZE);
     lastSector = DivRoundDown(position + numBytes - 1, SECTOR_SIZE);
@@ -150,7 +155,9 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     delete [] buf;
 
     if (synch != nullptr) {
+        DEBUG('f', "Ending synch read of file with global id %u\n", globalId);
         synch->EndRead();
+        DEBUG('f', "Ended synch read of file with global id %u\n", globalId);
     }
 
     DEBUG('f', "Read from file of length %u finished.\n", fileLength);
@@ -165,7 +172,9 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
     ASSERT(numBytes > 0);
 
     if (synch != nullptr) {
+        DEBUG('f', "Begin synch write of file with global id %u\n", globalId);
         synch->BeginWrite(currentThread);
+        DEBUG('f', "Write synched of file with global id %u\n", globalId);
     }
 
     unsigned fileLength = hdr->FileLength();
@@ -175,13 +184,18 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
 
     if (position >= fileLength) {
         // TODO: Aca se arrancan los archivos extensibles
+        if (synch != nullptr) {
+            DEBUG('f', "Ending synch write of file with global id %u\n", globalId);
+            synch->EndWrite();
+            DEBUG('f', "Ended synch write of file with global id %u\n", globalId);
+        }
         return 0;  // Check request.
     }
     if (position + numBytes > fileLength) {
         numBytes = fileLength - position;
     }
-    DEBUG('f', "Writing %u bytes at %u, from file of length %u.\n",
-          numBytes, position, fileLength);
+    DEBUG('f', "Writing %u bytes at %u, from file of global id %u of length %u.\n",
+          numBytes, position, globalId, fileLength);
 
     firstSector = DivRoundDown(position, SECTOR_SIZE);
     lastSector  = DivRoundDown(position + numBytes - 1, SECTOR_SIZE);
@@ -212,8 +226,12 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
     delete [] buf;
 
     if (synch != nullptr) {
+        DEBUG('f', "Ending synch write of file with global id %u\n", globalId);
         synch->EndWrite();
+        DEBUG('f', "Ended synch write of file with global id %u\n", globalId);
     }
+
+    DEBUG('f', "Read from file of length %u finished.\n", fileLength);
 
     return numBytes;
 }

@@ -43,9 +43,18 @@ OpenFilesTable::RemoveFile(int fileId)
 int
 OpenFilesTable::Find(const char *name)
 {
-  // TODO: this
   DEBUG('f', "Searching file %s on open files table\n", name);
-  return -1;
+
+  ASSERT(name != nullptr);
+
+  for (unsigned i = 0; i < filesInfoTable->SIZE; i++) {
+      if (filesInfoTable->HasKey(i)
+            && !strncmp(filesInfoTable->Get(i)->name, name, FILE_NAME_MAX_LEN)) {
+          return i;
+      }
+  }
+
+  return -1;  // name not in table
 }
 
 FileInfo*

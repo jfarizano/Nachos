@@ -17,7 +17,9 @@ SynchDirectory::~SynchDirectory()
 void
 SynchDirectory::FetchFrom(OpenFile *file)
 {
+    DEBUG('f', "Locking directory\n");
     directoryLock->Acquire();
+    DEBUG('f', "Directory locked\n");
     directory->FetchFrom(file);
 }
 
@@ -29,20 +31,24 @@ SynchDirectory::WriteBack(OpenFile *file)
 {
     directory->WriteBack(file);
     directoryLock->Release();
+    DEBUG('f', "Directory released\n");
 }
 
 // It's possible to do a WriteBack without doing a FetchFrom first, so we 
 // acquire the lock manually
 void
 SynchDirectory::Request() {
-  directoryLock->Acquire();
+    DEBUG('f', "Locking directory\n");
+    directoryLock->Acquire();
+    DEBUG('f', "Directory locked\n");
 }
 
 /// The lock was acquired but no change was made, the lock is released.
 /// After this, there shouldn't be a WriteBack and the Directory will be deleted
 void
 SynchDirectory::Flush() {
-  directoryLock->Release();
+    directoryLock->Release();
+    DEBUG('f', "Directory released\n");
 }
 
 /// Look up file name in directory, and return the disk sector number where

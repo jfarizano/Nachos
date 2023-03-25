@@ -81,7 +81,9 @@ SynchBitmap::Print() const
 void
 SynchBitmap::FetchFrom(OpenFile *file)
 {
+    DEBUG('f', "Locking freemap\n");
     bitmapLock->Acquire();
+    DEBUG('f', "Freemap locked\n");
     bitmap->FetchFrom(file);
 }
 
@@ -94,13 +96,16 @@ SynchBitmap::WriteBack(OpenFile *file) const
 {
     bitmap->WriteBack(file);
     bitmapLock->Release();
+    DEBUG('f', "Free map released\n");
 }
 
 // It's possible to do a WriteBack without doing a FetchFrom first, so we 
 // acquire the lock manually
 void
 SynchBitmap::Request() {
-  bitmapLock->Acquire();
+    DEBUG('f', "Locking freemap\n");
+    bitmapLock->Acquire();
+    DEBUG('f', "Freemap locked\n");
 }
 
 /// The lock was acquired but no change was made, the lock is released.
@@ -109,6 +114,7 @@ void
 SynchBitmap::Flush()
 {
   bitmapLock->Release();
+  DEBUG('f', "Free map released\n");
 }
 
 Bitmap*
