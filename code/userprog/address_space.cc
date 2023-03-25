@@ -225,7 +225,9 @@ AddressSpace::LoadPage(unsigned vpn)
 {  
   ASSERT(!pageTable[vpn].valid);
 
+  #if defined(DEMAND_LOADING) || defined(USE_SWAP)
   unsigned virtualAddr = vpn * PAGE_SIZE;
+  #endif
 
   #ifndef USE_SWAP
   int frame = usedPages->Find();
