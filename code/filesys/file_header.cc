@@ -45,15 +45,30 @@ FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize)
         return false;
     }
 
+    unsigned numDataSectors = GetNumDataSectors(fileSize);
+    // data + indirec tables, raw file header already has a sector
+    unsigned numIndirectTables = GetNumIndirectTables(fileSize);
+    unsigned numSectorsTotal = numDataSectors + numIndirectTables;
+
     raw.numBytes = fileSize;
-    raw.numSectors = DivRoundUp(fileSize, SECTOR_SIZE);
-    if (freeMap->CountClear() < raw.numSectors) {
+    if (freeMap->CountClear() < numSectorsTotal) {
         return false;  // Not enough space.
     }
 
-    for (unsigned i = 0; i < raw.numSectors; i++) {
-        raw.dataSectors[i] = freeMap->Find();
+    // Alojamos un sector para cada tabla de indirección
+    for (unsigned i = 0; i < numIndirectTables; i++) {
+        raw.tableSectors[i] = freeMap->Find();
     }
+
+    // Para cada sector de datos, calculamos su tabla de indirección y dentro de
+    // ella alojamos espacio para él.
+    for (unsigned i = 0, indexInTable = 0; i < numDataSectors; i++) {
+        unsigned table = DivRoundDown(i, NUM_INDIRECT);
+        indirectTables[table].dataSectors[indexInTable] = freeMap->Find();
+        indexInTable++;
+        indexInTable %= NUM_DIRECT;
+    }
+    
     return true;
 }
 
@@ -65,9 +80,22 @@ FileHeader::Deallocate(Bitmap *freeMap)
 {
     ASSERT(freeMap != nullptr);
 
-    for (unsigned i = 0; i < raw.numSectors; i++) {
-        ASSERT(freeMap->Test(raw.dataSectors[i]));  // ought to be marked!
-        freeMap->Clear(raw.dataSectors[i]);
+    unsigned numDataSectors = GetNumDataSectors(raw.numBytes);
+    unsigned numIndirectTables = GetNumIndirectTables(raw.numBytes);
+
+    // Liberamos todos los sectores ocupados
+    for (unsigned i = 0, indexInTable = 0; i < numDataSectors; i++) {
+        unsigned table = DivRoundDown(i, NUM_INDIRECT);
+        ASSERT(freeMap->Test(indirectTables[table].dataSectors[indexInTable]));  // ought to be marked!
+        freeMap->Clear(indirectTables[table].dataSectors[indexInTable]);
+        indexInTable++;
+        indexInTable %= NUM_DIRECT;
+    }
+
+    // Liberamos las tablas de indirección
+    for (unsigned i = 0; i < numIndirectTables; i++) {
+        ASSERT(freeMap->Test(raw.tableSectors[i]));
+        freeMap->Clear(raw.tableSectors[i]);
     }
 }
 
@@ -78,6 +106,11 @@ void
 FileHeader::FetchFrom(unsigned sector)
 {
     synchDisk->ReadSector(sector, (char *) &raw);
+
+    unsigned numIndirectTables = GetNumIndirectTables(raw.numBytes);
+    for (unsigned i = 0; i < numIndirectTables; i++) {
+        synchDisk->ReadSector(raw.tableSectors[i], (char *) &indirectTables[i]);
+    }
 }
 
 /// Write the modified contents of the file header back to disk.
@@ -87,6 +120,11 @@ void
 FileHeader::WriteBack(unsigned sector)
 {
     synchDisk->WriteSector(sector, (char *) &raw);
+    
+    unsigned numIndirectTables = GetNumIndirectTables(raw.numBytes);
+    for (unsigned i = 0; i < numIndirectTables; i++) {
+        synchDisk->WriteSector(raw.tableSectors[i], (char *) &indirectTables[i]);
+    }
 }
 
 /// Return which disk sector is storing a particular byte within the file.
@@ -98,7 +136,9 @@ FileHeader::WriteBack(unsigned sector)
 unsigned
 FileHeader::ByteToSector(unsigned offset)
 {
-    return raw.dataSectors[offset / SECTOR_SIZE];
+    unsigned table = DivRoundDown(offset, SECTOR_SIZE);
+    unsigned offsetInTable = offset - (table * SECTOR_SIZE);        
+    return indirectTables[table].dataSectors[DivRoundDown(offsetInTable, SECTOR_SIZE)];
 }
 
 /// Return the number of bytes in the file.
@@ -113,40 +153,54 @@ FileHeader::FileLength() const
 void
 FileHeader::Print(const char *title)
 {
-    char *data = new char [SECTOR_SIZE];
+    // TODO: Print con indirect tables
+    // char *data = new char [SECTOR_SIZE];
 
-    if (title == nullptr) {
-        printf("File header:\n");
-    } else {
-        printf("%s file header:\n", title);
-    }
+    // if (title == nullptr) {
+    //     printf("File header:\n");
+    // } else {
+    //     printf("%s file header:\n", title);
+    // }
 
-    printf("    size: %u bytes\n"
-           "    block indexes: ",
-           raw.numBytes);
+    // printf("    size: %u bytes\n"
+    //        "    block indexes: ",
+    //        raw.numBytes);
 
-    for (unsigned i = 0; i < raw.numSectors; i++) {
-        printf("%u ", raw.dataSectors[i]);
-    }
-    printf("\n");
+    // for (unsigned i = 0; i < raw.numSectors; i++) {
+    //     printf("%u ", raw.dataSectors[i]);
+    // }
+    // printf("\n");
 
-    for (unsigned i = 0, k = 0; i < raw.numSectors; i++) {
-        printf("    contents of block %u:\n", raw.dataSectors[i]);
-        synchDisk->ReadSector(raw.dataSectors[i], data);
-        for (unsigned j = 0; j < SECTOR_SIZE && k < raw.numBytes; j++, k++) {
-            if (isprint(data[j])) {
-                printf("%c", data[j]);
-            } else {
-                printf("\\%X", (unsigned char) data[j]);
-            }
-        }
-        printf("\n");
-    }
-    delete [] data;
+    // for (unsigned i = 0, k = 0; i < raw.numSectors; i++) {
+    //     printf("    contents of block %u:\n", raw.dataSectors[i]);
+    //     synchDisk->ReadSector(raw.dataSectors[i], data);
+    //     for (unsigned j = 0; j < SECTOR_SIZE && k < raw.numBytes; j++, k++) {
+    //         if (isprint(data[j])) {
+    //             printf("%c", data[j]);
+    //         } else {
+    //             printf("\\%X", (unsigned char) data[j]);
+    //         }
+    //     }
+    //     printf("\n");
+    // }
+    // delete [] data;
+    return;
 }
 
 const RawFileHeader *
 FileHeader::GetRaw() const
 {
     return &raw;
+}
+
+unsigned
+FileHeader::GetNumDataSectors(unsigned fileSize) 
+{
+    return DivRoundUp(fileSize, SECTOR_SIZE);
+}
+
+unsigned
+FileHeader::GetNumIndirectTables(unsigned fileSize)
+{
+    return DivRoundUp(DivRoundUp(fileSize, SECTOR_SIZE), NUM_DIRECT);
 }

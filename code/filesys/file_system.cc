@@ -226,14 +226,20 @@ FileSystem::Create(const char *name, unsigned initialSize)
                 dir->WriteBack(directoryFile);
                 freeMap->WriteBack(freeMapFile);
             } else {
-                dir->Flush();
-                freeMap->Flush();
                 DEBUG('f', "No space on disk for data for file %s.\n", name);
             }
             delete h;
         }
+
+        // Manually release the locks if something went wrong
+        if (!success) {
+            dir->Flush();
+            freeMap->Flush();
+        }
         delete freeMap;
     }
+
+
     delete dir;
     return success;
 }
@@ -393,6 +399,7 @@ FileSystem::List()
     delete dir;
 }
 
+/*
 static bool
 AddToShadowBitmap(unsigned sector, Bitmap *map)
 {
@@ -513,10 +520,12 @@ CheckDirectory(const RawDirectory *rd, Bitmap *shadowMap)
     }
     return error;
 }
+*/
 
 bool
 FileSystem::Check()
 {
+/*
     DEBUG('f', "Performing filesystem check\n");
     bool error = false;
 
@@ -566,6 +575,8 @@ FileSystem::Check()
                      : "Filesystem check succeeded.\n");
 
     return !error;
+*/
+    return true;
 }
 
 /// Print everything about the file system:

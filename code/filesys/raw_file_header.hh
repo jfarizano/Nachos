@@ -9,17 +9,31 @@
 
 #include "machine/disk.hh"
 
-
+// Maximum number of indirection tables
+static const unsigned NUM_INDIRECT
+  = (SECTOR_SIZE - 1 * sizeof (int)) / sizeof (int);
+// Number of disk sectors with data for each indirection table
 static const unsigned NUM_DIRECT
-  = (SECTOR_SIZE - 2 * sizeof (int)) / sizeof (int);
-const unsigned MAX_FILE_SIZE = NUM_DIRECT * SECTOR_SIZE;
+  = SECTOR_SIZE / sizeof (int);
+const unsigned MAX_FILE_SIZE = NUM_INDIRECT * NUM_DIRECT * SECTOR_SIZE;
 
 struct RawFileHeader {
     unsigned numBytes;  ///< Number of bytes in the file.
-    unsigned numSectors;  ///< Number of data sectors in the file.
-    unsigned dataSectors[NUM_DIRECT];  ///< Disk sector numbers for each data
-                                       ///< block in the file.
+    unsigned tableSectors[NUM_INDIRECT];  ///< Disk sector numbers for each indirection
+                                          ///< table in the file.
 };
 
+struct RawIndirectionTable {
+  unsigned dataSectors[NUM_DIRECT]; /// Disk sector numbers for each data block
+                                    // in the file
+};
+
+/*
+// NOTE:
+cant de indirectables = numBytes / SECTOR_SIZE / NUM_INDIRECT; pa rriba
+position / NUM_INDIRECT <- Cual tabla de indireccion
+position - (position / NUM_INDIRECT) <- posicion dentro de la tabla de indireccion
+(position - (position / NUM_INDIRECT) ) / sector_size <- sector de la tabla de indireccion
+*/
 
 #endif
