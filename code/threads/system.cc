@@ -283,10 +283,20 @@ Cleanup()
     for (unsigned i = 0; i < runningThreads->SIZE; i++) {
         Thread *t = runningThreads->Get(i);
         if (t != nullptr) {
+            #ifdef USE_SWAP
+            #ifdef FILESYS
+            currentThread = t;
+            #endif
+            if (t->space != nullptr) {
+                if (t->space->nameSwap != nullptr) {
+                    fileSystem->Remove(t->space->nameSwap);
+                }
+            }
+            currentThread = nullptr;
             delete t;
+            #endif
         }
     }
-    
 
     delete machine;
     delete synchConsole;

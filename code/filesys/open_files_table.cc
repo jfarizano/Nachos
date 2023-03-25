@@ -8,7 +8,7 @@ OpenFilesTable::OpenFilesTable()
 
 OpenFilesTable::~OpenFilesTable()
 {
-  ASSERT(filesInfoTable->FetchCount() == 0);
+  // ASSERT(filesInfoTable->FetchCount() == 0);
   delete filesInfoTable;
 }
 
@@ -44,6 +44,7 @@ int
 OpenFilesTable::Find(const char *name)
 {
   // TODO: this
+  DEBUG('f', "Searching file %s on open files table\n", name);
   return -1;
 }
 

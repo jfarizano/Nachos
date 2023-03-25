@@ -70,19 +70,15 @@ FileSystem::FileSystem(bool format)
 {
     DEBUG('f', "Initializing the file system.\n");
 
-    SynchFile *synchFreeMap = new SynchFile;
-    FileHeader *hdrFreeMap = new FileHeader;
-    hdrFreeMap->FetchFrom(FREE_MAP_SECTOR);
+    SynchFile *synchFreeMap = nullptr;
+    FileHeader *mapH = new FileHeader;
 
-    SynchFile *synchDirectory = new SynchFile;
-    FileHeader *hdrDirectory = new FileHeader;
-    hdrDirectory->FetchFrom(DIRECTORY_SECTOR);
+    SynchFile *synchDirectory = nullptr;
+    FileHeader *dirH = new FileHeader; 
 
     if (format) {
         Bitmap     *freeMap = new Bitmap(NUM_SECTORS);
         Directory  *dir     = new Directory(NUM_DIR_ENTRIES);
-        FileHeader *mapH    = new FileHeader;
-        FileHeader *dirH    = new FileHeader;
 
         DEBUG('f', "Formatting the file system.\n");
 
@@ -110,8 +106,8 @@ FileSystem::FileSystem(bool format)
         // The file system operations assume these two files are left open
         // while Nachos is running.
 
-        freeMapFile   = new OpenFile(hdrFreeMap, synchFreeMap, 0);
-        directoryFile = new OpenFile(hdrDirectory, synchDirectory, 1);
+        freeMapFile   = new OpenFile(mapH, synchFreeMap, 0);
+        directoryFile = new OpenFile(dirH, synchDirectory, 1);
 
         // Once we have the files “open”, we can write the initial version of
         // each file back to disk.  The directory at this point is completely
@@ -129,30 +125,33 @@ FileSystem::FileSystem(bool format)
 
             delete freeMap;
             delete dir;
-            delete mapH;
-            delete dirH;
         }
     } else {
         // If we are not formatting the disk, just open the files
         // representing the bitmap and directory; these are left open while
         // Nachos is running.
-        freeMapFile   = new OpenFile(hdrFreeMap, synchFreeMap, 0);
-        directoryFile = new OpenFile(hdrDirectory, synchDirectory, 1);
+        mapH->FetchFrom(FREE_MAP_SECTOR);
+        freeMapFile   = new OpenFile(mapH, synchFreeMap, 0);
+        
+        dirH->FetchFrom(DIRECTORY_SECTOR);
+        directoryFile = new OpenFile(dirH, synchDirectory, 1);
     }
 
+    // TODO: Sincronizar mejor, falla por los locks de dir y freemap
     DEBUG('f', "Creating global open files table\n");
     openFiles = new OpenFilesTable;
-    openFiles->AddFile(nullptr, hdrFreeMap, synchFreeMap);
-    openFiles->AddFile(nullptr, hdrDirectory, synchDirectory);
+    openFiles->AddFile(nullptr, mapH, synchFreeMap);
+    openFiles->AddFile(nullptr, dirH, synchDirectory);
     DEBUG('f', "Filesystem initialized\n");
 }
 
 FileSystem::~FileSystem()
 {
-    delete freeMapFile;
-    delete directoryFile;
+    DEBUG('f', "Deleting filesystem\n");
     this->Close(0);
     this->Close(1);
+    delete freeMapFile;
+    delete directoryFile;
     delete openFiles;
 }
 
@@ -184,10 +183,10 @@ FileSystem::~FileSystem()
 bool
 FileSystem::Create(const char *name, unsigned initialSize)
 {
+    DEBUG('f', "Creating file %s, size %u\n", name, initialSize);
+
     ASSERT(name != nullptr);
     ASSERT(initialSize < MAX_FILE_SIZE);
-
-    DEBUG('f', "Creating file %s, size %u\n", name, initialSize);
 
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
@@ -195,6 +194,7 @@ FileSystem::Create(const char *name, unsigned initialSize)
     bool success;
 
     if (dir->Find(name) != -1) {
+        DEBUG('f', "File %s already exists\n", name);
         success = false;  // File is already in directory.
     } else {
         Bitmap *freeMap = new Bitmap(NUM_SECTORS);
@@ -202,8 +202,10 @@ FileSystem::Create(const char *name, unsigned initialSize)
         int sector = freeMap->Find();
           // Find a sector to hold the file header.
         if (sector == -1) {
+            DEBUG('f', "No free block for file header, for file %s.\n", name);
             success = false;  // No free block for file header.
         } else if (!dir->Add(name, sector)) {
+            DEBUG('f', "No space in directory for file %s.\n", name);
             success = false;  // No space in directory.
         } else {
             FileHeader *h = new FileHeader;
@@ -214,6 +216,8 @@ FileSystem::Create(const char *name, unsigned initialSize)
                 h->WriteBack(sector);
                 dir->WriteBack(directoryFile);
                 freeMap->WriteBack(freeMapFile);
+            } else {
+                DEBUG('f', "No space on disk for data for file %s.\n", name);
             }
             delete h;
         }
@@ -236,7 +240,7 @@ FileSystem::Open(const char *name)
     ASSERT(name != nullptr);
 
     int fId;
-    OpenFile  *openFile = nullptr;
+    OpenFile *openFile = nullptr;
 
     // File wasn't opened by another thread so it's added to the table
     if ((fId = openFiles->Find(name)) == - 1) {
@@ -312,30 +316,39 @@ FileSystem::Close(int fId) {
 bool
 FileSystem::Delete(const char *name) {
     DEBUG('f', "Deleting file %s\n", name);
+
+    DEBUG('f', "Deleting file %s. Fetching directory\n", name);
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
+
     int sector = dir->Find(name);
     if (sector == -1) {
        delete dir;
        DEBUG('f', "File %s\n not found, deletedn't", name);
        return false;  // file not found
     }
+    DEBUG('f', "Deleting file %s. Fetching file header\n", name);
     FileHeader *fileH = new FileHeader;
     fileH->FetchFrom(sector);
 
+    DEBUG('f', "Deleting file %s. Fetching bitmap\n", name);
     Bitmap *freeMap = new Bitmap(NUM_SECTORS);
     freeMap->FetchFrom(freeMapFile);
 
+    DEBUG('f', "Deleting file %s. Removing data blocks\n", name);
     fileH->Deallocate(freeMap);  // Remove data blocks.
+    DEBUG('f', "Deleting file %s. Removing file header block\n", name);
     freeMap->Clear(sector);      // Remove header block.
+    DEBUG('f', "Deleting file %s. Removing from directory\n", name);
     dir->Remove(name);
 
+    DEBUG('f', "Deleting file %s. Writing to disk, free map and dir\n", name);
     freeMap->WriteBack(freeMapFile);  // Flush to disk.
     dir->WriteBack(directoryFile);    // Flush to disk.
     delete fileH;
     delete dir;
     delete freeMap;
-    DEBUG('f', "File %s\n deleted", name);
+    DEBUG('f', "File %s deleted\n", name);
     return true;
 }
 

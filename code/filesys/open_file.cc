@@ -115,7 +115,11 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
 
-    synch->BeginRead(currentThread);
+    if (synch != nullptr) {
+        DEBUG('f', "Waiting to synch read\n");
+        synch->BeginRead(currentThread);
+        DEBUG('f', "Read synched\n");
+    }
 
     unsigned fileLength = hdr->FileLength();
     unsigned firstSector, lastSector, numSectors;
@@ -145,7 +149,11 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     memcpy(into, &buf[position - firstSector * SECTOR_SIZE], numBytes);
     delete [] buf;
 
-    synch->EndRead();
+    if (synch != nullptr) {
+        synch->EndRead();
+    }
+
+    DEBUG('f', "Read from file of length %u finished.\n", fileLength);
 
     return numBytes;
 }
@@ -156,7 +164,9 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
     ASSERT(from != nullptr);
     ASSERT(numBytes > 0);
 
-    synch->BeginWrite(currentThread);
+    if (synch != nullptr) {
+        synch->BeginWrite(currentThread);
+    }
 
     unsigned fileLength = hdr->FileLength();
     unsigned firstSector, lastSector, numSectors;
@@ -164,6 +174,7 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
     char *buf;
 
     if (position >= fileLength) {
+        // TODO: Aca se arrancan los archivos extensibles
         return 0;  // Check request.
     }
     if (position + numBytes > fileLength) {
@@ -200,7 +211,9 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
     }
     delete [] buf;
 
-    synch->EndWrite();
+    if (synch != nullptr) {
+        synch->EndWrite();
+    }
 
     return numBytes;
 }
