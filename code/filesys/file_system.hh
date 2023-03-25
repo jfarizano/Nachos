@@ -96,6 +96,8 @@ public:
 #include "machine/disk.hh"
 #include "filesys/open_files_table.hh"
 
+class Lock;
+
 /// Initial file sizes for the bitmap and directory; until the file system
 /// supports extensible files, the directory size sets the maximum number of
 /// files that can be loaded onto the disk.
@@ -144,6 +146,9 @@ private:
     OpenFile *directoryFile;  ///< “Root” directory -- list of file names,
                               ///< represented as a file.
     OpenFilesTable *openFiles;
+
+    Lock *freeMapLock;
+    Lock *directoryLock;
 
     /// Delete a file (UNIX `unlink`).
     bool Delete(const char *name);
