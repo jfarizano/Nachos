@@ -58,6 +58,10 @@ void
 Lock::Release()
 {
     ASSERT(IsHeldByCurrentThread());
+    // TODO: Revisar si esto es necesario
+    #ifdef FILESYS
+    if (currentThread != nullptr);
+    #endif
     currentThread->RestorePriority();
     threadLocking = nullptr;
     semaphore->V();
@@ -66,5 +70,10 @@ Lock::Release()
 bool
 Lock::IsHeldByCurrentThread() const
 {
+    #ifdef FILESYS
+        if (currentThread == nullptr) {
+            return false;
+        }
+    #endif
     return currentThread == threadLocking;
 }

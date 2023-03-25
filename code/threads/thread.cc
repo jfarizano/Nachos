@@ -62,6 +62,7 @@ Thread::Thread(const char *threadName, bool joinableT, unsigned startPriority)
     filesTable->Add(nullptr); // CONSOLE_INPUT
     filesTable->Add(nullptr); // CONSOLE_OUTPUT
     pid = runningThreads->Add(this);
+    DEBUG('t', "Thread created with name %s and PID %u\n", name, pid);
 #endif
 }
 
@@ -82,11 +83,8 @@ Thread::~Thread()
     if (stack != nullptr) {
         SystemDep::DeallocBoundedArray((char *) stack,
                                        STACK_SIZE * sizeof *stack);
+        DEBUG('t', "Stack of thread %s deallocated\n", name);
     }
-
-    // if (joinable) {
-    //     delete channel;
-    // }
     
 #ifdef USER_PROGRAM
     for (unsigned i = 0; i < filesTable->SIZE; i++) {
@@ -100,10 +98,13 @@ Thread::~Thread()
             }
         }
     }
-
-    runningThreads->Remove(pid);
+    DEBUG('t', "Files table of thread %s cleared, all files closed\n", name);
+    
     delete filesTable;
+    DEBUG('t', "Deleting address space of thread %s\n", name);
     delete space;
+    DEBUG('t', "Thread %s deleted\n", name);
+    runningThreads->Remove(pid);
 #endif
 }
 
@@ -195,16 +196,26 @@ Thread::Finish(int code)
     interrupt->SetLevel(INT_OFF);
     ASSERT(this == currentThread);
 
+    DEBUG('t', "Finishing thread \"%s\" with code %d\n", GetName(), code);
+
     if (joinable) {
         channel->Send(code);
     }
 
-    DEBUG('t', "Finishing thread \"%s\" with code %d\n", GetName(), code);
+    #ifdef USE_SWAP
+    #ifdef FILESYS
+        if (space != nullptr) {
+            fileSystem->Remove(space->nameSwap);
+            space->nameSwap = nullptr;
+        }
+    #endif
+    #endif
 
     threadToBeDestroyed = currentThread;
 
     #ifdef USER_PROGRAM
         if (runningThreads->FetchCount() == 1) {
+            DEBUG('t', "Finishing last process, halting machine\n");
             interrupt->Halt();
         }
     #endif

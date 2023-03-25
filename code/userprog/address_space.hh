@@ -57,6 +57,7 @@ public:
     Bitmap *inSwap;
     #ifdef USE_SWAP
     OpenFile *swap;
+    char *nameSwap;
     #endif
 
 private:
@@ -71,7 +72,6 @@ private:
     OpenFile *exec;
 
     #ifdef USE_SWAP
-    char *nameSwap;
     void HandleVictim(unsigned frame);
     unsigned PickVictim();
     #endif

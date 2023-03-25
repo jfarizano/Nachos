@@ -152,6 +152,12 @@ SyscallHandler(ExceptionType _et)
             Thread *t = new Thread(filename, (bool) joinable, currentThread->GetPriority());
             AddressSpace *space = new AddressSpace(executable, t->pid);
             t->space = space;
+            
+            // De esta forma, al terminar el thread, se liberan el header
+            // y la estructura de synch porque se cierra el archivo
+            #ifdef USE_SWAP
+            t->filesTable->Add(space->swap);
+            #endif
 
             char **args = nullptr;
 

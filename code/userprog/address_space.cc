@@ -140,7 +140,6 @@ AddressSpace::~AddressSpace()
     delete [] pageTable;
 
     #ifdef USE_SWAP
-    fileSystem->Remove(nameSwap);
     delete [] nameSwap;
     delete inSwap;
     #endif
