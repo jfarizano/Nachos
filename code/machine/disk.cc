@@ -95,7 +95,7 @@ PrintSector(bool writing, unsigned sector, const char *data)
         printf("Reading sector: %u\n", sector);
     }
     for (unsigned i = 0; i < SECTOR_SIZE / sizeof (int); i++) {
-        printf("%X ", p[i]);
+        printf("%04X ", p[i]);
     }
     printf("\n");
 }

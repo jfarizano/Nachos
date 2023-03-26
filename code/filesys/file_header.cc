@@ -45,12 +45,13 @@ FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize)
         return false;
     }
 
-    unsigned numDataSectors = GetNumDataSectors(fileSize);
-    // data + indirec tables, raw file header already has a sector
-    unsigned numIndirectTables = GetNumIndirectTables(fileSize);
-    unsigned numSectorsTotal = numDataSectors + numIndirectTables;
-
     raw.numBytes = fileSize;
+
+    unsigned numDataSectors = GetNumDataSectors();
+    // data + indirec tables, raw file header already has a sector
+    unsigned numIndirectTables = GetNumIndirectTables();
+    unsigned numSectorsTotal = numDataSectors + numIndirectTables;
+    
     if (freeMap->CountClear() < numSectorsTotal) {
         return false;  // Not enough space.
     }
@@ -80,8 +81,8 @@ FileHeader::Deallocate(Bitmap *freeMap)
 {
     ASSERT(freeMap != nullptr);
 
-    unsigned numDataSectors = GetNumDataSectors(raw.numBytes);
-    unsigned numIndirectTables = GetNumIndirectTables(raw.numBytes);
+    unsigned numDataSectors = GetNumDataSectors();
+    unsigned numIndirectTables = GetNumIndirectTables();
 
     // Liberamos todos los sectores ocupados
     for (unsigned i = 0, indexInTable = 0; i < numDataSectors; i++) {
@@ -107,7 +108,7 @@ FileHeader::FetchFrom(unsigned sector)
 {
     synchDisk->ReadSector(sector, (char *) &raw);
 
-    unsigned numIndirectTables = GetNumIndirectTables(raw.numBytes);
+    unsigned numIndirectTables = GetNumIndirectTables();
     for (unsigned i = 0; i < numIndirectTables; i++) {
         synchDisk->ReadSector(raw.tableSectors[i], (char *) &indirectTables[i]);
     }
@@ -121,7 +122,7 @@ FileHeader::WriteBack(unsigned sector)
 {
     synchDisk->WriteSector(sector, (char *) &raw);
     
-    unsigned numIndirectTables = GetNumIndirectTables(raw.numBytes);
+    unsigned numIndirectTables = GetNumIndirectTables();
     for (unsigned i = 0; i < numIndirectTables; i++) {
         synchDisk->WriteSector(raw.tableSectors[i], (char *) &indirectTables[i]);
     }
@@ -136,9 +137,24 @@ FileHeader::WriteBack(unsigned sector)
 unsigned
 FileHeader::ByteToSector(unsigned offset)
 {
-    unsigned table = DivRoundDown(offset, SECTOR_SIZE);
-    unsigned offsetInTable = offset - (table * SECTOR_SIZE);        
-    return indirectTables[table].dataSectors[DivRoundDown(offsetInTable, SECTOR_SIZE)];
+    unsigned sector = DivRoundDown(offset, SECTOR_SIZE);
+    unsigned table = DivRoundDown(sector, NUM_DIRECT);
+    unsigned offsetInTable = offset - (table * NUM_DIRECT * SECTOR_SIZE);
+    unsigned indexInTable = DivRoundDown(offsetInTable, SECTOR_SIZE);
+    unsigned result = indirectTables[table].dataSectors[indexInTable];
+
+    DEBUG(
+        'f', 
+        "Traslating byte to sector. Offset: %u, total sector: %u, " 
+        "indirect table: %u, offsetInTable: %u, index in table: %u, result sector %u\n", 
+        offset, sector, table, offsetInTable, indexInTable, result
+    );
+
+    ASSERT(offset >= 0 && offset < raw.numBytes);
+    ASSERT(table >= 0 && table < GetNumIndirectTables());
+    ASSERT(sector >= 0 && sector < GetNumDataSectors());    
+
+    return result;
 }
 
 /// Return the number of bytes in the file.
@@ -194,13 +210,13 @@ FileHeader::GetRaw() const
 }
 
 unsigned
-FileHeader::GetNumDataSectors(unsigned fileSize) 
+FileHeader::GetNumDataSectors() 
 {
-    return DivRoundUp(fileSize, SECTOR_SIZE);
+    return DivRoundUp(raw.numBytes, SECTOR_SIZE);
 }
 
 unsigned
-FileHeader::GetNumIndirectTables(unsigned fileSize)
+FileHeader::GetNumIndirectTables()
 {
-    return DivRoundUp(DivRoundUp(fileSize, SECTOR_SIZE), NUM_DIRECT);
+    return DivRoundUp(DivRoundUp(raw.numBytes, SECTOR_SIZE), NUM_DIRECT);
 }

@@ -67,9 +67,9 @@ private:
     RawFileHeader raw;
     RawIndirectionTable indirectTables[NUM_INDIRECT];
 
-    unsigned GetNumDataSectors(unsigned fileSize);
+    unsigned GetNumDataSectors();
 
-    unsigned GetNumIndirectTables(unsigned fileSize);
+    unsigned GetNumIndirectTables();
 };
 
 
