@@ -231,7 +231,7 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
         DEBUG('f', "Ended synch write of file with global id %u\n", globalId);
     }
 
-    DEBUG('f', "Read from file of length %u finished.\n", fileLength);
+    DEBUG('f', "Write from file of length %u finished.\n", fileLength);
 
     return numBytes;
 }

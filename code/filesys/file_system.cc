@@ -125,6 +125,7 @@ FileSystem::FileSystem(bool format)
         freeMap->WriteBack(freeMapFile);     // flush changes to disk
         dir->Request();
         dir->WriteBack(directoryFile);
+        DEBUG('f', "Bitmap and directory saved to disk.\n");
         
         if (debug.IsEnabled('f')) {
             freeMap->Print();
@@ -242,6 +243,7 @@ FileSystem::Create(const char *name, unsigned initialSize)
 
     delete dir;
     return success;
+
 }
 
 /// Open a file for reading and writing.

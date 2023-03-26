@@ -27,7 +27,7 @@
 #include <string.h>
 
 
-static const unsigned TRANSFER_SIZE = 10;  // Make it small, just to be
+static const unsigned TRANSFER_SIZE = 128;  // Make it small, just to be
                                            // difficult.
 
 /// Copy the contents of the UNIX file `from` to the Nachos file `to`.
@@ -74,6 +74,7 @@ Copy(const char *from, const char *to)
     fileSystem->Close(openFile->GetGlobalId());
     delete openFile;
     fclose(fp);
+
 }
 
 /// Print the contents of the Nachos file `name`.
