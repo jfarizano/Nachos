@@ -63,7 +63,7 @@ FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize)
     // Para cada sector de datos, calculamos su tabla de indirección y dentro de
     // ella alojamos espacio para él.
     for (unsigned i = 0, indexInTable = 0; i < numDataSectors; i++) {
-        unsigned table = DivRoundDown(i, NUM_INDIRECT);
+        unsigned table = DivRoundDown(i, NUM_DIRECT);
         indirectTables[table].dataSectors[indexInTable] = freeMap->Find();
         indexInTable++;
         indexInTable %= NUM_DIRECT;
@@ -85,7 +85,7 @@ FileHeader::Deallocate(Bitmap *freeMap)
 
     // Liberamos todos los sectores ocupados
     for (unsigned i = 0, indexInTable = 0; i < numDataSectors; i++) {
-        unsigned table = DivRoundDown(i, NUM_INDIRECT);
+        unsigned table = DivRoundDown(i, NUM_DIRECT);
         ASSERT(freeMap->Test(indirectTables[table].dataSectors[indexInTable]));  // ought to be marked!
         freeMap->Clear(indirectTables[table].dataSectors[indexInTable]);
         indexInTable++;

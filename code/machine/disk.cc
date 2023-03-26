@@ -121,6 +121,8 @@ Disk::ReadRequest(unsigned sectorNumber, char *data)
 
     int ticks = ComputeLatency(sectorNumber, false);
 
+    DEBUG('d', "Read requested for sector number %u\n", sectorNumber);
+
     ASSERT(!active);  // only one request at a time
     ASSERT(sectorNumber >= 0 && sectorNumber < NUM_SECTORS);
 
