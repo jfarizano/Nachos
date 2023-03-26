@@ -1,5 +1,5 @@
 # para users de vs code
-vscode/
+.vscode/
 # ejecutables, archivos swap, cosas de makefile
 code/**/*.o
 code/**/SWAP.*
