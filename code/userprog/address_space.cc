@@ -180,7 +180,7 @@ AddressSpace::InitRegisters()
 void
 AddressSpace::SaveState()
 {
-  #ifdef USE_SWAP
+  #ifdef USE_TLB
   unsigned vpn;
   TranslationEntry *tlb = machine->GetMMU()->tlb;
 
@@ -340,7 +340,6 @@ ClockPolicy()
   int vpn;
   AddressSpace* space;
   TranslationEntry *entry;
-  // TranslationEntry *tlb = machine->GetMMU()->tlb;
 
   currentThread->space->SaveState();
   

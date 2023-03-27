@@ -274,6 +274,8 @@ SyscallHandler(ExceptionType _et)
                 OpenFileId fileId = currentThread->filesTable->Add(file);
                 
                 if (fileId == -1) {
+                    // FIXME: Esto puede provocar bugs si no se hace un close
+                    // en el filesystem
                     DEBUG('e', "Error: Files table full, can not open more files.\n", filename);
                 }
 

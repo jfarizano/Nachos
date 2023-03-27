@@ -153,7 +153,7 @@ FileHeader::ByteToSector(unsigned offset)
     ASSERT(offset >= 0 && offset < raw.numBytes);
     ASSERT(table >= 0 && table < GetNumIndirectTables());
     ASSERT(sector >= 0 && sector < GetNumDataSectors());
-    ASSERT(indexInTable >= 0 && indexInTable < NUM_DIRECT);    
+    ASSERT(indexInTable >= 0 && indexInTable < NUM_DIRECT);
 
     return result;
 }

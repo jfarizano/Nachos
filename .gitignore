@@ -36,3 +36,5 @@ documentation/**/*.out
 documentation/**/*.dvi
 documentation/**/*.xdv
 documentation/**/*-converted-to.*
+# archivos de texto de prueba
+code/**/*.txt
