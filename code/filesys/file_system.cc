@@ -111,8 +111,8 @@ FileSystem::FileSystem(bool format)
         // The file system operations assume these two files are left open
         // while Nachos is running.
 
-        freeMapFile   = new OpenFile(mapH, synchFreeMap, 0);
-        directoryFile = new OpenFile(dirH, synchDirectory, 1);
+        freeMapFile   = new OpenFile(mapH, synchFreeMap, 0, freeMapFile, freeMapLock);
+        directoryFile = new OpenFile(dirH, synchDirectory, 1, freeMapFile, freeMapLock);
 
         // Once we have the files “open”, we can write the initial version of
         // each file back to disk.  The directory at this point is completely
@@ -139,10 +139,10 @@ FileSystem::FileSystem(bool format)
         // representing the bitmap and directory; these are left open while
         // Nachos is running.
         mapH->FetchFrom(FREE_MAP_SECTOR);
-        freeMapFile   = new OpenFile(mapH, synchFreeMap, 0);
+        freeMapFile   = new OpenFile(mapH, synchFreeMap, 0, freeMapFile, freeMapLock);
         
         dirH->FetchFrom(DIRECTORY_SECTOR);
-        directoryFile = new OpenFile(dirH, synchDirectory, 1);
+        directoryFile = new OpenFile(dirH, synchDirectory, 1, freeMapFile, freeMapLock);
     }
 
     DEBUG('f', "Creating global open files table\n");
@@ -277,7 +277,7 @@ FileSystem::Open(const char *name)
             fId = openFiles->AddFile(name, hdr, synch);
             
             if (fId != -1) {
-                openFile = new OpenFile(hdr, synch, fId);  // `name` was found in directory.
+                openFile = new OpenFile(hdr, synch, fId, freeMapFile, freeMapLock);  // `name` was found in directory.
             } else {
                 delete hdr;
                 delete synch;
@@ -292,7 +292,7 @@ FileSystem::Open(const char *name)
         if(fInfo->available) {
             DEBUG('f', "Opening file %s (again)\n", name);
             fInfo->nThreads++;
-            openFile = new OpenFile(fInfo->hdr, fInfo->synch, fId);
+            openFile = new OpenFile(fInfo->hdr, fInfo->synch, fId, freeMapFile, freeMapLock);
         } else {
             DEBUG('f', "File %s removed by other thread, could not be opened\n", name);
         }

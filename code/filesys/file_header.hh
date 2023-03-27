@@ -61,7 +61,10 @@ public:
     ///
     /// NOTE: this should only be used by routines that operate on the file
     /// system at a low level.
-    const RawFileHeader *GetRaw() const;    
+    const RawFileHeader *GetRaw() const;
+
+    /// Extend the file size
+    bool ExtendFile(Bitmap *bitMap, unsigned newFileSize);    
 
 private:
     RawFileHeader raw;
