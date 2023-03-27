@@ -221,3 +221,44 @@ FileHeader::GetNumIndirectTables()
 {
     return DivRoundUp(DivRoundUp(raw.numBytes, SECTOR_SIZE), NUM_DIRECT);
 }
+
+bool
+FileHeader::ExtendFile(Bitmap *bitMap, unsigned newFileSize){
+    unsigned oldFileSize = raw.numBytes;
+    unsigned oldNumSectors = GetNumDataSectors();
+    unsigned oldNumIndirectTables = GetNumIndirectTables();
+    unsigned newNumSectors = DivRoundUp(newFileSize, SECTOR_SIZE);
+    unsigned newNumIndirectTables = DivRoundUp(DivRoundUp(newFileSize, SECTOR_SIZE), NUM_DIRECT);
+
+    DEBUG('f', "Extending file from %u bytes to %u bytes\n", oldFileSize, newFileSize);
+
+    if (newFileSize <= raw.numBytes) {
+        DEBUG('f', "File already has the size requested\n");
+        return true;
+    }
+
+    if (bitMap->CountClear() < newNumSectors - oldNumSectors) {
+        DEBUG('f', "Not enough space in disk to extend file\n");
+        return false;
+    }
+
+    // Create new indirection tables if necessary
+    if (oldNumIndirectTables < newNumIndirectTables) {
+        for (unsigned i = oldNumIndirectTables; i < newNumIndirectTables; i++) {
+            raw.tableSectors[i] = bitMap->Find();
+        }
+    }
+
+    // Add missing sectors
+    for (unsigned i = oldNumSectors, indexInTable = 0; i < newNumSectors; i++) {
+        unsigned table = DivRoundDown(i, NUM_DIRECT);
+        indirectTables[table].dataSectors[indexInTable] = bitMap->Find();
+        indexInTable++;
+        indexInTable %= NUM_DIRECT;
+    }
+
+    raw.numBytes = newFileSize;
+
+    // Everything ok :)
+    return true;
+}

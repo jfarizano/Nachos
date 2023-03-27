@@ -22,7 +22,7 @@
 /// memory while the file is open.
 ///
 /// * `sector` is the location on disk of the file header for this file.
-OpenFile::OpenFile(FileHeader *sharedHdr, SynchFile *sharedSynch, int fId)
+OpenFile::OpenFile(FileHeader *sharedHdr, SynchFile *sharedSynch, int fId, OpenFile *freemap, Lock *lock)
 {
     // hdr = new FileHeader;
     // hdr->FetchFrom(sector);
@@ -30,6 +30,8 @@ OpenFile::OpenFile(FileHeader *sharedHdr, SynchFile *sharedSynch, int fId)
     synch = sharedSynch;
     globalId = fId;
     seekPosition = 0;
+    freemapFile = freemap;
+    freemapLock = lock;
 }
 
 /// Close a Nachos file, de-allocating any in-memory data structures.
@@ -184,12 +186,25 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
 
     if (position >= fileLength) {
         // TODO: Aca se arrancan los archivos extensibles
-        if (synch != nullptr) {
-            DEBUG('f', "Ending synch write of file with global id %u\n", globalId);
-            synch->EndWrite();
-            DEBUG('f', "Ended synch write of file with global id %u\n", globalId);
+        DEBUG('f', "Reached end of file, extending it.\n");
+        
+        Bitmap *freeMap = new Bitmap(NUM_SECTORS);
+        
+        freemapLock->Acquire();
+        freeMap->FetchFrom(freemapFile);
+        if(!hdr->ExtendFile(freeMap, position + numBytes)){
+            DEBUG('f', "Error extending file size.\n");
+
+            freeMap->WriteBack(freemapFile);
+            freemapLock->Release();
+
+            return 0;
         }
-        return 0;  // Check request.
+        freeMap->WriteBack(freemapFile);
+        freemapLock->Release();
+        delete freeMap;
+
+        fileLength = hdr->FileLength();
     }
     if (position + numBytes > fileLength) {
         numBytes = fileLength - position;
