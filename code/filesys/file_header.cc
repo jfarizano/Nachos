@@ -223,12 +223,15 @@ FileHeader::GetNumIndirectTables()
 }
 
 bool
-FileHeader::ExtendFile(Bitmap *bitMap, unsigned newFileSize){
+FileHeader::ExtendFile(Bitmap *freeMap, unsigned newFileSize){
     unsigned oldFileSize = raw.numBytes;
-    unsigned oldNumSectors = GetNumDataSectors();
+    unsigned oldDataSectors = GetNumDataSectors();
     unsigned oldNumIndirectTables = GetNumIndirectTables();
-    unsigned newNumSectors = DivRoundUp(newFileSize, SECTOR_SIZE);
+    unsigned oldTotalSectors = oldDataSectors + oldNumIndirectTables;
+
+    unsigned newDataSectors = DivRoundUp(newFileSize, SECTOR_SIZE);
     unsigned newNumIndirectTables = DivRoundUp(DivRoundUp(newFileSize, SECTOR_SIZE), NUM_DIRECT);
+    unsigned newTotalSectors = newDataSectors + newNumIndirectTables;
 
     DEBUG('f', "Extending file from %u bytes to %u bytes\n", oldFileSize, newFileSize);
 
@@ -237,7 +240,7 @@ FileHeader::ExtendFile(Bitmap *bitMap, unsigned newFileSize){
         return true;
     }
 
-    if (bitMap->CountClear() < newNumSectors - oldNumSectors) {
+    if (freeMap->CountClear() < newTotalSectors - oldTotalSectors) {
         DEBUG('f', "Not enough space in disk to extend file\n");
         return false;
     }
@@ -245,14 +248,20 @@ FileHeader::ExtendFile(Bitmap *bitMap, unsigned newFileSize){
     // Create new indirection tables if necessary
     if (oldNumIndirectTables < newNumIndirectTables) {
         for (unsigned i = oldNumIndirectTables; i < newNumIndirectTables; i++) {
-            raw.tableSectors[i] = bitMap->Find();
+            raw.tableSectors[i] = freeMap->Find();
         }
     }
 
+    // Find the index in the table where we should start writing    
+    unsigned sector = oldDataSectors + 1;
+    unsigned tableNum = DivRoundDown(sector, NUM_DIRECT);
+    unsigned offsetInTable = oldFileSize - (tableNum * NUM_DIRECT * SECTOR_SIZE);
+    unsigned indexInTable = DivRoundDown(offsetInTable, SECTOR_SIZE);
+
     // Add missing sectors
-    for (unsigned i = oldNumSectors, indexInTable = 0; i < newNumSectors; i++) {
+    for (unsigned i = sector; i < newDataSectors; i++) {
         unsigned table = DivRoundDown(i, NUM_DIRECT);
-        indirectTables[table].dataSectors[indexInTable] = bitMap->Find();
+        indirectTables[table].dataSectors[indexInTable] = freeMap->Find();
         indexInTable++;
         indexInTable %= NUM_DIRECT;
     }

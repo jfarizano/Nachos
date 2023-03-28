@@ -131,6 +131,9 @@ public:
     /// Marks a file to be deleted if it's opened by another thread, otherwise it's deleted
     bool Remove(const char *name);
 
+    /// Extend the size of a file.
+    bool Extend(unsigned globalId, unsigned newSize);
+    
     /// List all the files in the file system.
     void List();
 

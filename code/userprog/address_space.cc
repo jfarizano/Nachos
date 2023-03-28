@@ -200,7 +200,6 @@ AddressSpace::SaveState()
 void
 AddressSpace::RestoreState()
 {
-    // TODO: No es necesario si currentThread == nextThread
     #ifdef USE_TLB
       DEBUG('a', "TLB has been invalidated\n");
       for (unsigned i = 0; i < TLB_SIZE; i++) {

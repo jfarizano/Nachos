@@ -111,8 +111,8 @@ FileSystem::FileSystem(bool format)
         // The file system operations assume these two files are left open
         // while Nachos is running.
 
-        freeMapFile   = new OpenFile(mapH, synchFreeMap, 0, freeMapFile, freeMapLock);
-        directoryFile = new OpenFile(dirH, synchDirectory, 1, freeMapFile, freeMapLock);
+        freeMapFile   = new OpenFile(mapH, synchFreeMap, 0);
+        directoryFile = new OpenFile(dirH, synchDirectory, 1);
 
         // Once we have the files “open”, we can write the initial version of
         // each file back to disk.  The directory at this point is completely
@@ -139,10 +139,10 @@ FileSystem::FileSystem(bool format)
         // representing the bitmap and directory; these are left open while
         // Nachos is running.
         mapH->FetchFrom(FREE_MAP_SECTOR);
-        freeMapFile   = new OpenFile(mapH, synchFreeMap, 0, freeMapFile, freeMapLock);
+        freeMapFile   = new OpenFile(mapH, synchFreeMap, 0);
         
         dirH->FetchFrom(DIRECTORY_SECTOR);
-        directoryFile = new OpenFile(dirH, synchDirectory, 1, freeMapFile, freeMapLock);
+        directoryFile = new OpenFile(dirH, synchDirectory, 1);
     }
 
     DEBUG('f', "Creating global open files table\n");
@@ -277,7 +277,7 @@ FileSystem::Open(const char *name)
             fId = openFiles->AddFile(name, hdr, synch);
             
             if (fId != -1) {
-                openFile = new OpenFile(hdr, synch, fId, freeMapFile, freeMapLock);  // `name` was found in directory.
+                openFile = new OpenFile(hdr, synch, fId);  // `name` was found in directory.
             } else {
                 delete hdr;
                 delete synch;
@@ -292,7 +292,7 @@ FileSystem::Open(const char *name)
         if(fInfo->available) {
             DEBUG('f', "Opening file %s (again)\n", name);
             fInfo->nThreads++;
-            openFile = new OpenFile(fInfo->hdr, fInfo->synch, fId, freeMapFile, freeMapLock);
+            openFile = new OpenFile(fInfo->hdr, fInfo->synch, fId);
         } else {
             DEBUG('f', "File %s removed by other thread, could not be opened\n", name);
         }
@@ -387,6 +387,45 @@ FileSystem::Remove(const char *name)
     } else {
         return this->Delete(name);
     }    
+}
+
+bool
+FileSystem::Extend(unsigned id, unsigned newSize)
+{
+    bool success = false;
+
+    FileInfo *fInfo;
+    ASSERT((fInfo = openFiles->Get(id)) != nullptr);
+
+    SynchDirectory *dir = new SynchDirectory(NUM_DIR_ENTRIES, directoryLock);
+    dir->FetchFrom(directoryFile);
+    
+    int sector;
+    // Find the header's sector in the directory
+    ASSERT((sector = dir->Find(fInfo->name)) >= 2);
+
+    SynchBitmap *freeMap = new SynchBitmap(NUM_SECTORS, freeMapLock);
+    freeMap->FetchFrom(freeMapFile);
+    freeMap->Request();
+
+    FileHeader *hdr = fInfo->hdr;
+        
+    if (hdr->ExtendFile(freeMap->GetBitmap(), newSize)) {
+        hdr->WriteBack(sector);
+        freeMap->WriteBack(freeMapFile);
+        success = true;        
+    } else {
+        // Restore previous state if failure
+        hdr->FetchFrom(sector);
+        freeMap->Flush();
+    }
+
+    dir->Flush();
+    
+    delete dir;
+    delete freeMap;
+
+    return success;
 }
 
 /// List all the files in the file system directory.
