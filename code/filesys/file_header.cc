@@ -235,8 +235,9 @@ FileHeader::ExtendFile(Bitmap *freeMap, unsigned newFileSize){
 
     DEBUG('f', "Extending file from %u bytes to %u bytes\n", oldFileSize, newFileSize);
 
-    if (newFileSize <= raw.numBytes) {
-        DEBUG('f', "File already has the size requested\n");
+    if (oldDataSectors == newDataSectors) {
+        DEBUG('f', "File already has the sectors neccesary\n");
+        raw.numBytes = newFileSize;
         return true;
     }
 
@@ -245,6 +246,9 @@ FileHeader::ExtendFile(Bitmap *freeMap, unsigned newFileSize){
         return false;
     }
 
+    ASSERT(newNumIndirectTables <= NUM_INDIRECT);
+    ASSERT(newDataSectors <= NUM_DIRECT * NUM_INDIRECT);
+
     // Create new indirection tables if necessary
     if (oldNumIndirectTables < newNumIndirectTables) {
         for (unsigned i = oldNumIndirectTables; i < newNumIndirectTables; i++) {
@@ -252,8 +256,9 @@ FileHeader::ExtendFile(Bitmap *freeMap, unsigned newFileSize){
         }
     }
 
+    // Falta mas logica para saber en que sector arrancar
     // Find the index in the table where we should start writing    
-    unsigned sector = oldDataSectors + 1;
+    unsigned sector = oldDataSectors;
     unsigned tableNum = DivRoundDown(sector, NUM_DIRECT);
     unsigned offsetInTable = oldFileSize - (tableNum * NUM_DIRECT * SECTOR_SIZE);
     unsigned indexInTable = DivRoundDown(offsetInTable, SECTOR_SIZE);
