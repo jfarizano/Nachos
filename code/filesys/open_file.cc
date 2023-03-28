@@ -25,8 +25,6 @@
 /// * `sector` is the location on disk of the file header for this file.
 OpenFile::OpenFile(FileHeader *sharedHdr, SynchFile *sharedSynch, int fId)
 {
-    // hdr = new FileHeader;
-    // hdr->FetchFrom(sector);
     hdr = sharedHdr;
     synch = sharedSynch;
     globalId = fId;
@@ -48,8 +46,6 @@ OpenFile::Seek(unsigned position)
 {
     seekPosition = position;
 }
-
-// TODO: Read y write
 
 /// OpenFile::Read/Write
 ///
@@ -183,20 +179,19 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
     bool firstAligned, lastAligned;
     char *buf;
 
-    if (position >= fileLength) {
-        // TODO: Aca se arrancan los archivos extensibles
+    fileLength = hdr->FileLength();
+
+    if (position >= fileLength || position + numBytes > fileLength) {
+        if (position + numBytes > MAX_FILE_SIZE) {
+            numBytes = MAX_FILE_SIZE - position;
+        }
+        
         DEBUG('f', "Reached end of file, extending it.\n");
     
         if(!fileSystem->Extend(globalId, position + numBytes)){
             DEBUG('f', "Error extending file size.\n");
             return 0;
-        }
-
-        fileLength = hdr->FileLength();
-    }
-
-    if (position + numBytes > fileLength) {
-        numBytes = fileLength - position;
+        }   
     }
 
     DEBUG('f', "Writing %u bytes at %u, from file of global id %u of length %u.\n",

@@ -406,14 +406,13 @@ FileSystem::Extend(unsigned id, unsigned newSize)
 
     SynchBitmap *freeMap = new SynchBitmap(NUM_SECTORS, freeMapLock);
     freeMap->FetchFrom(freeMapFile);
-    freeMap->Request();
 
     FileHeader *hdr = fInfo->hdr;
         
     if (hdr->ExtendFile(freeMap->GetBitmap(), newSize)) {
         hdr->WriteBack(sector);
         freeMap->WriteBack(freeMapFile);
-        success = true;        
+        success = true;
     } else {
         // Restore previous state if failure
         hdr->FetchFrom(sector);
