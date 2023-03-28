@@ -64,7 +64,7 @@ public:
     const RawFileHeader *GetRaw() const;
 
     /// Extend the file size
-    bool ExtendFile(Bitmap *bitMap, unsigned newFileSize);    
+    bool ExtendFile(Bitmap *freeMap, unsigned newFileSize);    
 
 private:
     RawFileHeader raw;

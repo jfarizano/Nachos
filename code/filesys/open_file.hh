@@ -95,7 +95,7 @@ class OpenFile {
 public:
 
     /// Open a file whose header is located at `sector` on the disk.
-    OpenFile(FileHeader *sharedHdr, SynchFile *sharedSynch, int fId, OpenFile *freemap, Lock *lock);
+    OpenFile(FileHeader *sharedHdr, SynchFile *sharedSynch, int fId);
 
     /// Close the file.
     ~OpenFile();
@@ -125,8 +125,6 @@ public:
     unsigned seekPosition;  ///< Current position within the file.
     SynchFile *synch; // To synch threads
     int globalId; // Id on the global files table
-    OpenFile *freemapFile;
-    Lock *freemapLock;
 };
 
 #endif
