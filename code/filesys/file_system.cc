@@ -223,7 +223,6 @@ FileSystem::Open(const char *name)
     DEBUG('f', "Opening file %s\n", name);
     dir->FetchFrom(directoryFile);
     int sector = dir->Find(name);
-    // FileInfo* info = openFilesList->Find(name);
     if (sector >= 0) {
         openFile = new OpenFile(sector);  // `name` was found in directory.
     }
@@ -275,7 +274,7 @@ FileSystem::Remove(const char *name)
 
 /// List all the files in the file system directory.
 void
-FileSystem::ListFiles()
+FileSystem::List()
 {
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
 

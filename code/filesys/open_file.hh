@@ -85,8 +85,6 @@ private:
 };
 
 #else // FILESYS
-#include "synch_file.hh"
-
 class FileHeader;
 
 class OpenFile {
@@ -116,11 +114,9 @@ public:
     // the UNIX idiom -- `lseek` to end of file, `tell`, `lseek` back).
     unsigned Length() const;
 
-    // SynchFile *synch;
   private:
     FileHeader *hdr;  ///< Header for this file.
     unsigned seekPosition;  ///< Current position within the file.
-    
 };
 
 #endif

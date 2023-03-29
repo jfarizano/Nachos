@@ -55,9 +55,7 @@ extern FileSystem *fileSystem;
 
 #ifdef FILESYS
 #include "filesys/synch_disk.hh"
-// #include "filesys/file_list.hh"
 extern SynchDisk *synchDisk;
-// extern OpenFilesList *openFilesList;
 #endif
 
 #ifdef NETWORK

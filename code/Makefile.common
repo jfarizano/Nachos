@@ -123,10 +123,7 @@ USERPROG_SRC = userprog/address_space.cc            \
 VMEM_HDR = vmem/coremap.hh
 VMEM_SRC = vmem/coremap.cc
 
-FILESYS_HDR = lib/list.hh                \
-              filesys/synch_file.hh       \
-              filesys/file_list.hh       \
-              filesys/directory.hh       \
+FILESYS_HDR = filesys/directory.hh       \
               filesys/directory_entry.hh \
               filesys/file_header.hh     \
               filesys/file_system.hh     \
@@ -135,9 +132,7 @@ FILESYS_HDR = lib/list.hh                \
               filesys/raw_file_header.hh \
               filesys/synch_disk.hh      \
               machine/disk.hh
-FILESYS_SRC = filesys/synch_file.cc   \
-              filesys/file_list.cc   \
-              filesys/directory.cc   \
+FILESYS_SRC = filesys/directory.cc   \
               filesys/file_header.cc \
               filesys/file_system.cc \
               filesys/fs_test.cc     \

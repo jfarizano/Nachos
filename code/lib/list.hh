@@ -78,8 +78,6 @@ public:
     /// Remove first item from list.
     Item SortedPop(int *keyPtr);
 
-    Item FindItemWithProperty(bool (*func)(Item));
-
 private:
 
     typedef ListElement<Item> ListNode;
@@ -321,22 +319,5 @@ List<Item>::SortedPop(int *keyPtr)
     return thing;
 }
 
-/// Apply a function to each item on the list, by walking through the list,
-/// one element at a time.
-///
-/// * `func` is the procedure to apply to each element of the list.
-template <class Item>
-Item
-List<Item>::FindItemWithProperty(bool (*func)(Item))
-{
-    ASSERT(func != nullptr);
-
-    for (ListNode *ptr = first; ptr != nullptr; ptr = ptr->next) {
-       if (func(ptr->item)) {
-           return ptr->item;
-       }
-    }
-    return Item();
-}
 
 #endif

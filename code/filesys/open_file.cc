@@ -120,9 +120,6 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     if (position + numBytes > fileLength) {
         numBytes = fileLength - position;
     }
-
-    // synch->BeginRead();
-
     DEBUG('f', "Reading %u bytes at %u, from file of length %u.\n",
           numBytes, position, fileLength);
 
@@ -140,9 +137,6 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     // Copy the part we want.
     memcpy(into, &buf[position - firstSector * SECTOR_SIZE], numBytes);
     delete [] buf;
-
-    // synch->EndRead();
-
     return numBytes;
 }
 
@@ -163,9 +157,6 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
     if (position + numBytes > fileLength) {
         numBytes = fileLength - position;
     }
-
-    // synch->BeginWrite();
-
     DEBUG('f', "Writing %u bytes at %u, from file of length %u.\n",
           numBytes, position, fileLength);
 
@@ -196,9 +187,6 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
                                &buf[(i - firstSector) * SECTOR_SIZE]);
     }
     delete [] buf;
-
-    // synch->EndWrite();
-    
     return numBytes;
 }
 
