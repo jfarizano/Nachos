@@ -152,12 +152,6 @@ SyscallHandler(ExceptionType _et)
             Thread *t = new Thread(filename, (bool) joinable, currentThread->GetPriority());
             AddressSpace *space = new AddressSpace(executable, t->pid);
             t->space = space;
-            
-            // De esta forma, al terminar el thread, se liberan el header
-            // y la estructura de synch porque se cierra el archivo
-            #ifdef USE_SWAP
-            t->filesTable->Add(space->swap);
-            #endif
 
             char **args = nullptr;
 
@@ -274,8 +268,10 @@ SyscallHandler(ExceptionType _et)
                 OpenFileId fileId = currentThread->filesTable->Add(file);
                 
                 if (fileId == -1) {
-                    // FIXME: Esto puede provocar bugs si no se hace un close
-                    // en el filesystem
+                    #ifndef FILESYS_STUB
+                    fileSystem->Close(file->GetGlobalId());
+                    delete file;
+                    #endif
                     DEBUG('e', "Error: Files table full, can not open more files.\n", filename);
                 }
 

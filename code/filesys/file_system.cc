@@ -150,7 +150,6 @@ FileSystem::FileSystem(bool format)
     openFiles->AddFile(nullptr, mapH, synchFreeMap);
     openFiles->AddFile(nullptr, dirH, synchDirectory);
     DEBUG('f', "Filesystem initialized\n");
-    //TODO: Check for previous swap files
 }
 
 FileSystem::~FileSystem()

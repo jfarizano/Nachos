@@ -198,18 +198,25 @@ Thread::Finish(int code)
 
     DEBUG('t', "Finishing thread \"%s\" with code %d\n", GetName(), code);
 
-    if (joinable) {
-        channel->Send(code);
-    }
-
     #ifdef USE_SWAP
     #ifdef FILESYS
         if (space != nullptr) {
+            fileSystem->Close(space->swap->GetGlobalId());
             fileSystem->Remove(space->nameSwap);
+            space->swap = nullptr;
             space->nameSwap = nullptr;
+            DEBUG('t', "Swap is no more\n");
         }
     #endif
     #endif
+
+    // Antes esto estaba antes de borrar el swap, pero se despertaba el thread
+    // padre antes de que termine de borrarse, por lo que intentaba obtener
+    // espacio en memoria, mandando páginas a la swap que se estaba borrando
+    // mientras, provocando seg fault
+    if (joinable) {
+        channel->Send(code);
+    }
 
     threadToBeDestroyed = currentThread;
 
