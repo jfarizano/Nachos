@@ -233,12 +233,14 @@ FileSystem::Create(const char *name, unsigned initialSize)
 
         // Manually release the locks if something went wrong
         if (!success) {
-            dir->Flush();
             freeMap->Flush();
         }
         delete freeMap;
     }
 
+    if (!success) {
+        dir->Flush();
+    }
 
     delete dir;
     return success;
