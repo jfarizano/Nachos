@@ -289,8 +289,10 @@ Cleanup()
             #endif
             if (t->space != nullptr) {
                 if (t->space->nameSwap != nullptr) {
-                    // TODO: arreglar de nuevo esto
                     DEBUG('f', "Removing swap file %s from halt\n", t->space->nameSwap);
+                    #ifndef FILESYS_STUB
+                    fileSystem->Close(t->space->swap->GetGlobalId());
+                    #endif
                     fileSystem->Remove(t->space->nameSwap);
                 }
             }

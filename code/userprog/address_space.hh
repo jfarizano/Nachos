@@ -54,6 +54,8 @@ public:
 
     /// Number of pages in the virtual address space.
     unsigned numPages;
+
+    
     Bitmap *inSwap;
     #ifdef USE_SWAP
     OpenFile *swap;

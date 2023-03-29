@@ -303,17 +303,24 @@ AddressSpace::HandleVictim(unsigned frame)
 
   DEBUG('e', "Freeing frame %u, occupied por vpn %u\n", frame, vpn);  
   
-  // TODO: No es necesario si no es el space actual
-  for (unsigned i = 0; i < TLB_SIZE; i++) {
-    if (tlb[i].physicalPage == frame && tlb[i].valid) {
-      entry->dirty = tlb[i].dirty;
-      entry->use = tlb[i].use;
-      tlb[i].valid = false;
-      break;
+  // currentThread->space debería ser igual a this, se deja así para 
+  // más legibilidad
+  // si this != space, la página víctima no puede ser válida
+  if (currentThread->space == space) {
+    for (unsigned i = 0; i < TLB_SIZE; i++) {
+      if (tlb[i].physicalPage == frame && tlb[i].valid) {
+        entry->dirty = tlb[i].dirty;
+        entry->use = tlb[i].use;
+        tlb[i].valid = false;
+        break;
+      }
     }
   }
 
-  if (entry->dirty) {
+  // Puede pasar que al haber poco espacio en memoria, al terminar un proceso
+  // y volver al proceso padre, el proceso padre mande una pagina a swap
+  // pero swap ya no existe porque el proceso terminó
+  if (entry->dirty && swap != nullptr) {
     DEBUG('e', "Sending page to swap\n");
     char *mainMemory = machine->GetMMU()->mainMemory;
     unsigned virtualAddr = vpn * PAGE_SIZE;
