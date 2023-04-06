@@ -170,37 +170,51 @@ FileHeader::FileLength() const
 void
 FileHeader::Print(const char *title)
 {
-    // TODO: Print con indirect tables
-    // char *data = new char [SECTOR_SIZE];
+    char *data = new char [SECTOR_SIZE];
 
-    // if (title == nullptr) {
-    //     printf("File header:\n");
-    // } else {
-    //     printf("%s file header:\n", title);
-    // }
+    if (title == nullptr) {
+        printf("File header:\n");
+    } else {
+        printf("%s file header:\n", title);
+    }
 
-    // printf("    size: %u bytes\n"
-    //        "    block indexes: ",
-    //        raw.numBytes);
+    printf("    size: %u bytes\n"
+           "    indirect tables in sectors: ",
+           raw.numBytes);
 
-    // for (unsigned i = 0; i < raw.numSectors; i++) {
-    //     printf("%u ", raw.dataSectors[i]);
-    // }
-    // printf("\n");
+    for (unsigned i = 0; i < GetNumIndirectTables(); i++) {
+        printf("%u ", raw.tableSectors[i]);
+    }
+    printf("\n");
 
-    // for (unsigned i = 0, k = 0; i < raw.numSectors; i++) {
-    //     printf("    contents of block %u:\n", raw.dataSectors[i]);
-    //     synchDisk->ReadSector(raw.dataSectors[i], data);
-    //     for (unsigned j = 0; j < SECTOR_SIZE && k < raw.numBytes; j++, k++) {
-    //         if (isprint(data[j])) {
-    //             printf("%c", data[j]);
-    //         } else {
-    //             printf("\\%X", (unsigned char) data[j]);
-    //         }
-    //     }
-    //     printf("\n");
-    // }
-    // delete [] data;
+    unsigned sectors = 0;
+    printf("contents of indirect tables: \n");
+    for (unsigned i = 0; i < GetNumIndirectTables(); i++) {
+        printf("table %u\n", i);
+        printf("block indexes: ");
+        // Print only the number of sectors that are actually used
+        for (unsigned j = 0; j < NUM_DIRECT && sectors < GetNumDataSectors(); j++) {
+            printf("%u ", indirectTables[i].dataSectors[j]);
+            sectors++;
+        }
+        printf("\n");
+    }
+
+
+    for (unsigned i = 0, k = 0; i < GetNumDataSectors(); i++) {
+        unsigned sector = ByteToSector(i * SECTOR_SIZE);
+        printf("    contents of block %u:\n", sector);
+        synchDisk->ReadSector(sector, data);
+        for (unsigned j = 0; j < SECTOR_SIZE && k < raw.numBytes; j++, k++) {
+            if (isprint(data[j])) {
+                printf("%c", data[j]);
+            } else {
+                printf("\\%X", (unsigned char) data[j]);
+            }
+        }
+        printf("\n");
+    }
+    delete [] data;
     return;
 }
 
@@ -208,6 +222,12 @@ const RawFileHeader *
 FileHeader::GetRaw() const
 {
     return &raw;
+}
+
+const RawIndirectionTable *
+FileHeader::GetRawTables() const
+{
+    return indirectTables;
 }
 
 unsigned
@@ -256,7 +276,6 @@ FileHeader::ExtendFile(Bitmap *freeMap, unsigned newFileSize){
         }
     }
 
-    // Falta mas logica para saber en que sector arrancar
     // Find the index in the table where we should start writing    
     unsigned sector = oldDataSectors;
     unsigned tableNum = DivRoundDown(sector, NUM_DIRECT);
