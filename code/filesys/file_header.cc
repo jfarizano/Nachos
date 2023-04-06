@@ -170,7 +170,6 @@ FileHeader::FileLength() const
 void
 FileHeader::Print(const char *title)
 {
-    TODO: Print con indirect tables
     char *data = new char [SECTOR_SIZE];
 
     if (title == nullptr) {
