@@ -476,21 +476,30 @@ CheckSector(unsigned sector, Bitmap *shadowMap)
 }
 
 static bool
-CheckFileHeader(const RawFileHeader *rh, unsigned num, Bitmap *shadowMap)
+CheckFileHeader(const RawFileHeader *rh, const RawIndirectionTable *it, unsigned num, Bitmap *shadowMap)
 {
     ASSERT(rh != nullptr);
 
     bool error = false;
 
+    unsigned numSectors = DivRoundUp(rh->numBytes, SECTOR_SIZE);
+    
     DEBUG('f', "Checking file header %u.  File size: %u bytes, number of sectors: %u.\n",
-          num, rh->numBytes, rh->numSectors);
-    error |= CheckForError(rh->numSectors >= DivRoundUp(rh->numBytes,
-                                                        SECTOR_SIZE),
-                           "sector count not compatible with file size.");
-    error |= CheckForError(rh->numSectors < NUM_DIRECT,
+          num, rh->numBytes, numSectors);
+    
+    unsigned indirectTables = DivRoundUp(DivRoundUp(rh->numBytes, SECTOR_SIZE), NUM_DIRECT);
+    for (unsigned i = 0; i < indirectTables; i++) {
+        error |= CheckSector(rh->tableSectors[i], shadowMap);
+    }
+
+    error |= CheckForError(numSectors <= NUM_DIRECT * NUM_INDIRECT,
                            "too many blocks.");
-    for (unsigned i = 0; i < rh->numSectors; i++) {
-        unsigned s = rh->dataSectors[i];
+                        
+    for (unsigned i = 0, indexInTable = 0; i < numSectors; i++) {
+        unsigned table = DivRoundDown(i, NUM_DIRECT);
+        unsigned s = it[table].dataSectors[indexInTable];
+        indexInTable++;
+        indexInTable %= NUM_DIRECT;
         error |= CheckSector(s, shadowMap);
     }
     return error;
@@ -553,9 +562,10 @@ CheckDirectory(const RawDirectory *rd, Bitmap *shadowMap)
 
             // Check file header.
             FileHeader *h = new FileHeader;
-            const RawFileHeader *rh = h->GetRaw();
             h->FetchFrom(e->sector);
-            error |= CheckFileHeader(rh, e->sector, shadowMap);
+            const RawFileHeader *rh = h->GetRaw();
+            const RawIndirectionTable *it = h->GetRawTables();
+            error |= CheckFileHeader(rh, it, e->sector, shadowMap);
             delete h;
         }
     }
@@ -577,25 +587,26 @@ FileSystem::Check()
     DEBUG('f', "Checking bitmap's file header.\n");
 
     FileHeader *bitH = new FileHeader;
-    const RawFileHeader *bitRH = bitH->GetRaw();
     bitH->FetchFrom(FREE_MAP_SECTOR);
-    DEBUG('f', "  File size: %u bytes, expected %u bytes.\n"
-               "  Number of sectors: %u, expected %u.\n",
-          bitRH->numBytes, FREE_MAP_FILE_SIZE,
-          bitRH->numSectors, FREE_MAP_FILE_SIZE / SECTOR_SIZE);
+    const RawFileHeader *bitRH = bitH->GetRaw();
+    const RawIndirectionTable *bitIT = bitH->GetRawTables();
+    DEBUG('f', "  File size: %u bytes, expected %u bytes.\n",
+          bitRH->numBytes, FREE_MAP_FILE_SIZE);
     error |= CheckForError(bitRH->numBytes == FREE_MAP_FILE_SIZE,
                            "bad bitmap header: wrong file size.");
-    error |= CheckForError(bitRH->numSectors == FREE_MAP_FILE_SIZE / SECTOR_SIZE,
-                           "bad bitmap header: wrong number of sectors.");
-    error |= CheckFileHeader(bitRH, FREE_MAP_SECTOR, shadowMap);
+    // Raw file header no guarda más el número de sectores
+    // error |= CheckForError(bitRH->numSectors == FREE_MAP_FILE_SIZE / SECTOR_SIZE,
+    //                        "bad bitmap header: wrong number of sectors.");
+    error |= CheckFileHeader(bitRH, bitIT, FREE_MAP_SECTOR, shadowMap);
     delete bitH;
 
     DEBUG('f', "Checking directory.\n");
 
     FileHeader *dirH = new FileHeader;
-    const RawFileHeader *dirRH = dirH->GetRaw();
     dirH->FetchFrom(DIRECTORY_SECTOR);
-    error |= CheckFileHeader(dirRH, DIRECTORY_SECTOR, shadowMap);
+    const RawFileHeader *dirRH = dirH->GetRaw();
+    const RawIndirectionTable *dirIT = dirH->GetRawTables();
+    error |= CheckFileHeader(dirRH, dirIT, DIRECTORY_SECTOR, shadowMap);
     delete dirH;
 
     Bitmap *freeMap = new Bitmap(NUM_SECTORS);

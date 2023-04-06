@@ -63,6 +63,8 @@ public:
     /// system at a low level.
     const RawFileHeader *GetRaw() const;
 
+    const RawIndirectionTable *GetRawTables() const;
+
     /// Extend the file size
     bool ExtendFile(Bitmap *freeMap, unsigned newFileSize);    
 
