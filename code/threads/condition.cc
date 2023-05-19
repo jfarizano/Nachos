@@ -47,8 +47,8 @@ void
 Condition::Wait()
 {
     // Release already checks if the current thread has the lock
-    lock->Release();
     waitingThreads++;
+    lock->Release();
     waitingSem->P();
     lock->Acquire();
 }
